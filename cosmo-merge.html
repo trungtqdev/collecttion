@@ -1,0 +1,1777 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+  <meta name="theme-color" content="#090b1c">
+  <meta name="description" content="Hợp Thể Tinh Cầu — Game vật lý thả sao cực cuốn hút ngay trên trình duyệt.">
+  <title>Hợp Thể Tinh Cầu — Cosmo Merge</title>
+  <style>
+    :root {
+      --bg: #070914;
+      --panel: #111528;
+      --cyan: #55e6ff;
+      --pink: #ff60b6;
+      --gold: #ffd257;
+      --purple: #9d6fff;
+      --text: #eef2ff;
+      --muted: #9aa3c2;
+      --danger: #ff4766;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    * { box-sizing: border-box; user-select: none; -webkit-user-select: none; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      touch-action: none;
+    }
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background:
+        radial-gradient(ellipse at 50% -10%, #201a4f 0%, transparent 55%),
+        radial-gradient(ellipse at 85% 90%, #30173f 0%, transparent 45%),
+        radial-gradient(ellipse at 15% 85%, #0f2847 0%, transparent 45%),
+        var(--bg);
+    }
+    #game-container {
+      position: relative;
+      width: min(100vw, 480px);
+      height: 100dvh;
+      max-height: 880px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 0 60px rgba(0, 0, 0, 0.6);
+      background: rgba(10, 13, 27, 0.5);
+    }
+    @media (min-width: 520px) {
+      #game-container {
+        border-radius: 28px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        height: min(96dvh, 860px);
+      }
+    }
+    /* Top Bar */
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: calc(10px + var(--safe-top)) 16px 8px;
+      z-index: 10;
+      flex-shrink: 0;
+    }
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 700;
+      transition: color 0.15s;
+    }
+    .back-btn:hover { color: var(--text); }
+    .brand-title {
+      font-size: 15px;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, #fff, var(--cyan) 60%, var(--purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .icon-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      color: var(--text);
+      width: 32px;
+      height: 32px;
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background 0.15s, transform 0.15s;
+    }
+    .icon-btn:hover { background: rgba(255, 255, 255, 0.16); transform: scale(1.05); }
+    .icon-btn:active { transform: scale(0.95); }
+
+    /* HUD */
+    .hud {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px 8px;
+      gap: 10px;
+      z-index: 10;
+      flex-shrink: 0;
+    }
+    .score-card {
+      flex: 1;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 14px;
+      padding: 7px 12px;
+      backdrop-filter: blur(8px);
+    }
+    .hud-label {
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      display: block;
+      margin-bottom: 2px;
+    }
+    .score-val {
+      font-size: 20px;
+      font-weight: 900;
+      color: var(--text);
+      line-height: 1.1;
+      font-variant-numeric: tabular-nums;
+    }
+    .best-val {
+      font-size: 17px;
+      font-weight: 800;
+      color: var(--gold);
+      line-height: 1.1;
+      font-variant-numeric: tabular-nums;
+    }
+    .next-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 14px;
+      padding: 6px 12px;
+      min-width: 66px;
+    }
+    .next-preview {
+      width: 28px;
+      height: 28px;
+      display: grid;
+      place-items: center;
+      margin-top: 2px;
+    }
+    .next-preview canvas {
+      width: 28px;
+      height: 28px;
+    }
+
+    /* Main Play Area */
+    .viewport {
+      position: relative;
+      flex: 1;
+      width: 100%;
+      min-height: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #game-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      touch-action: none;
+    }
+
+    /* Floating Combo & Shockwave bar */
+    .controls-overlay {
+      position: absolute;
+      bottom: calc(66px + var(--safe-bottom));
+      left: 16px;
+      right: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      pointer-events: none;
+      z-index: 15;
+    }
+    .combo-banner {
+      opacity: 0;
+      transform: translateY(6px) scale(0.92);
+      transition: opacity 0.2s, transform 0.2s;
+      padding: 5px 12px;
+      border-radius: 99px;
+      background: linear-gradient(135deg, rgba(255, 96, 182, 0.85), rgba(157, 111, 255, 0.85));
+      backdrop-filter: blur(6px);
+      box-shadow: 0 4px 18px rgba(255, 96, 182, 0.35);
+      font-weight: 900;
+      font-size: 13px;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .combo-banner.active {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+    .pulse-btn {
+      pointer-events: auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      border-radius: 99px;
+      border: 1px solid rgba(85, 230, 255, 0.3);
+      background: rgba(16, 26, 52, 0.78);
+      backdrop-filter: blur(8px);
+      color: var(--cyan);
+      font-weight: 800;
+      font-size: 12px;
+      cursor: pointer;
+      transition: transform 0.15s, background 0.15s, border-color 0.15s;
+    }
+    .pulse-btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      border-color: rgba(255, 255, 255, 0.1);
+      color: var(--muted);
+    }
+    .pulse-btn:not(:disabled):hover {
+      background: rgba(85, 230, 255, 0.18);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(85, 230, 255, 0.25);
+    }
+    .pulse-btn:not(:disabled):active {
+      transform: translateY(1px);
+    }
+    .pulse-gauge {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      border: 2px solid rgba(85, 230, 255, 0.3);
+      border-top-color: var(--cyan);
+      display: inline-block;
+      transition: transform 0.2s;
+    }
+    .pulse-btn.ready .pulse-gauge {
+      background: var(--cyan);
+      box-shadow: 0 0 10px var(--cyan);
+      border-color: #fff;
+    }
+
+    /* Evolution Guide Bar */
+    .evolution-bar {
+      padding: 6px 12px calc(8px + var(--safe-bottom));
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      background: rgba(7, 9, 20, 0.7);
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      z-index: 10;
+      flex-shrink: 0;
+    }
+    .evolution-bar::-webkit-scrollbar { display: none; }
+    .tier-badge {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      opacity: 0.35;
+      font-size: 14px;
+      transition: transform 0.2s, opacity 0.2s, box-shadow 0.2s;
+      position: relative;
+    }
+    .tier-badge.unlocked {
+      opacity: 1;
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+    .tier-badge.current-highest {
+      transform: scale(1.15);
+      border-color: var(--gold);
+      box-shadow: 0 0 14px rgba(255, 210, 87, 0.45);
+    }
+    .tier-arrow {
+      color: rgba(255, 255, 255, 0.2);
+      font-size: 10px;
+      flex-shrink: 0;
+    }
+
+    /* Modals & Overlays */
+    .overlay-screen {
+      position: absolute;
+      inset: 0;
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: rgba(5, 7, 16, 0.78);
+      backdrop-filter: blur(12px);
+      opacity: 1;
+      transition: opacity 0.25s;
+    }
+    .overlay-screen.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+    .modal-card {
+      width: min(390px, 95%);
+      background: linear-gradient(160deg, #181d36, #0e1124 85%);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 26px;
+      padding: 30px 24px;
+      text-align: center;
+      box-shadow: 0 25px 80px rgba(0, 0, 0, 0.7), 0 0 50px rgba(85, 230, 255, 0.06);
+    }
+    .modal-hero-icon {
+      font-size: 54px;
+      margin-bottom: 8px;
+      display: inline-block;
+      filter: drop-shadow(0 0 24px rgba(255, 210, 87, 0.5));
+      animation: floatHero 3s ease-in-out infinite alternate;
+    }
+    @keyframes floatHero {
+      from { transform: translateY(0) rotate(-3deg); }
+      to { transform: translateY(-8px) rotate(3deg); }
+    }
+    .modal-title {
+      font-size: clamp(28px, 7vw, 36px);
+      font-weight: 950;
+      line-height: 1.05;
+      letter-spacing: -0.04em;
+      margin: 0 0 10px;
+      background: linear-gradient(135deg, #fff, var(--cyan) 50%, #d896ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .modal-sub {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.55;
+      margin: 0 0 22px;
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 22px;
+    }
+    .stat-pill {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+      padding: 10px 12px;
+      text-align: center;
+    }
+    .stat-pill b {
+      display: block;
+      font-size: 20px;
+      font-weight: 900;
+      color: var(--text);
+      line-height: 1.15;
+    }
+    .stat-pill span {
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .new-best-flag {
+      color: var(--gold);
+      font-weight: 900;
+      font-size: 12px;
+      margin-bottom: 14px;
+      letter-spacing: 0.05em;
+      min-height: 18px;
+    }
+    .action-btn {
+      width: 100%;
+      padding: 14px 20px;
+      border: 0;
+      border-radius: 15px;
+      background: linear-gradient(135deg, var(--cyan), #9f7aff);
+      color: #080b18;
+      font-weight: 900;
+      font-size: 15px;
+      cursor: pointer;
+      box-shadow: 0 8px 30px rgba(85, 230, 255, 0.35);
+      transition: transform 0.15s, filter 0.15s;
+    }
+    .action-btn:hover {
+      transform: translateY(-2px);
+      filter: brightness(1.08);
+    }
+    .action-btn:active {
+      transform: translateY(1px);
+    }
+    .guide-tips {
+      margin-top: 18px;
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+  <div id="game-container">
+    <!-- Top Navigation -->
+    <header class="top-bar">
+      <a class="back-btn" href="./">
+        <span aria-hidden="true">←</span> Sảnh game
+      </a>
+      <div class="brand-title">
+        <span aria-hidden="true">🪐</span> Hợp Thể Tinh Cầu
+      </div>
+      <div class="top-actions">
+        <button id="soundBtn" class="icon-btn" title="Bật/Tắt âm thanh" aria-label="Bật/Tắt âm thanh">🔊</button>
+        <button id="helpBtn" class="icon-btn" title="Hướng dẫn" aria-label="Hướng dẫn">?</button>
+      </div>
+    </header>
+
+    <!-- HUD Stats -->
+    <section class="hud" aria-label="Bảng điểm">
+      <div class="score-card">
+        <span class="hud-label">Điểm</span>
+        <div id="scoreVal" class="score-val">0</div>
+      </div>
+      <div class="next-box">
+        <span class="hud-label">Kế tiếp</span>
+        <div class="next-preview" id="nextPreview">
+          <canvas id="nextCanvas" width="56" height="56"></canvas>
+        </div>
+      </div>
+      <div class="score-card" style="text-align: right;">
+        <span class="hud-label">Kỷ lục</span>
+        <div id="bestVal" class="best-val">0</div>
+      </div>
+    </section>
+
+    <!-- Canvas Simulation Viewport -->
+    <main class="viewport" id="viewport">
+      <canvas id="game-canvas"></canvas>
+
+      <!-- Active Floating Banner & Shockwave Action -->
+      <div class="controls-overlay">
+        <div id="comboBanner" class="combo-banner">
+          <span aria-hidden="true">⚡</span> COMBO x2!
+        </div>
+        <button id="pulseBtn" class="pulse-btn" disabled title="Nhấn Space hoặc bấm để rung các hành tinh">
+          <span class="pulse-gauge"></span> Sóng Trọng Lực (0/3)
+        </button>
+      </div>
+    </main>
+
+    <!-- Bottom Evolution Chart -->
+    <footer class="evolution-bar" id="evolutionBar" aria-label="Cây tiến hóa hành tinh">
+      <!-- Generated by JS -->
+    </footer>
+
+    <!-- Start Modal -->
+    <div id="startModal" class="overlay-screen">
+      <div class="modal-card">
+        <div class="modal-hero-icon">🪐</div>
+        <h1 class="modal-title">HỢP THỂ<br>TINH CẦU</h1>
+        <p class="modal-sub">Thả những vì sao tí hon và kết hợp chúng thành Mặt Trời rực rỡ và Hố Đen huyền bí.</p>
+        <div class="stats-grid">
+          <div class="stat-pill">
+            <b id="startBestVal">0</b>
+            <span>KỶ LỤC</span>
+          </div>
+          <div class="stat-pill">
+            <b id="startHighestPlanet">Bụi Sao</b>
+            <span>ĐỈNH CAO</span>
+          </div>
+        </div>
+        <button id="startBtn" class="action-btn">BẮT ĐẦU CHƠI</button>
+        <div class="guide-tips">
+          Di chuột / Vuốt để ngắm · Nhả / Click để thả<br>
+          Phím Space để kích hoạt Sóng Trọng Lực
+        </div>
+      </div>
+    </div>
+
+    <!-- Game Over Modal -->
+    <div id="endModal" class="overlay-screen hidden">
+      <div class="modal-card">
+        <div class="modal-hero-icon" id="endHeroIcon">💥</div>
+        <h2 class="modal-title" style="font-size: 30px;">HẾT CHỖ RỒI!</h2>
+        <div id="newBestFlag" class="new-best-flag"></div>
+        <div class="stats-grid">
+          <div class="stat-pill">
+            <b id="endScoreVal">0</b>
+            <span>ĐIỂM SỐ</span>
+          </div>
+          <div class="stat-pill">
+            <b id="endBestVal">0</b>
+            <span>KỶ LỤC</span>
+          </div>
+          <div class="stat-pill">
+            <b id="endHighestPlanet">Mặt Trời</b>
+            <span>HÀNH TINH LỚN NHẤT</span>
+          </div>
+          <div class="stat-pill">
+            <b id="endComboVal">x1</b>
+            <span>COMBO CAO NHẤT</span>
+          </div>
+        </div>
+        <button id="restartBtn" class="action-btn">CHƠI LẠI NGAY</button>
+        <div class="guide-tips">
+          Mẹo: Giữ các hành tinh lớn ở phía dưới và gom hành tinh nhỏ xung quanh!
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  (() => {
+    'use strict';
+
+    // --- Audio Synthesis (Web Audio API) ---
+    class SoundEngine {
+      constructor() {
+        this.ctx = null;
+        this.muted = false;
+        try {
+          this.muted = localStorage.getItem('cosmoSoundMuted') === '1';
+        } catch (_) {}
+      }
+
+      init() {
+        if (!this.ctx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          if (AudioContext) {
+            this.ctx = new AudioContext();
+          }
+        }
+        if (this.ctx && this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      }
+
+      toggleMute() {
+        this.muted = !this.muted;
+        try {
+          localStorage.setItem('cosmoSoundMuted', this.muted ? '1' : '0');
+        } catch (_) {}
+        return this.muted;
+      }
+
+      playDrop() {
+        if (this.muted) return;
+        this.init();
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(420, now);
+        osc.frequency.exponentialRampToValueAtTime(180, now + 0.12);
+        gain.gain.setValueAtTime(0.12, now);
+        gain.gain.linearRampToValueAtTime(0.001, now + 0.12);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.13);
+      }
+
+      playBounce(volume = 0.1, radius = 30) {
+        if (this.muted) return;
+        this.init();
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        const pitch = Math.max(90, 360 - radius * 2.2);
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(pitch, now);
+        osc.frequency.exponentialRampToValueAtTime(pitch * 0.7, now + 0.08);
+        const v = Math.min(0.18, volume * 0.15);
+        gain.gain.setValueAtTime(v, now);
+        gain.gain.linearRampToValueAtTime(0.001, now + 0.08);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.09);
+      }
+
+      playMerge(tierIndex, combo = 1) {
+        if (this.muted) return;
+        this.init();
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+
+        // Pentatonic frequencies
+        const baseFreqs = [261.63, 293.66, 329.63, 392.00, 440.00, 523.25, 587.33, 659.25, 783.99, 880.00, 1046.50];
+        const f0 = baseFreqs[Math.min(tierIndex, baseFreqs.length - 1)];
+        const comboShift = Math.min(1.5, 1 + (combo - 1) * 0.12);
+        const freq = f0 * comboShift;
+
+        // Primary bell oscillator
+        const osc1 = this.ctx.createOscillator();
+        const osc2 = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc1.type = 'triangle';
+        osc1.frequency.setValueAtTime(freq, now);
+
+        osc2.type = 'sine';
+        osc2.frequency.setValueAtTime(freq * 2, now);
+
+        gain.gain.setValueAtTime(0.24, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.42);
+
+        osc1.connect(gain);
+        osc2.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        osc1.start(now);
+        osc2.start(now);
+        osc1.stop(now + 0.45);
+        osc2.stop(now + 0.45);
+      }
+
+      playPulse() {
+        if (this.muted) return;
+        this.init();
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(160, now);
+        osc.frequency.exponentialRampToValueAtTime(60, now + 0.45);
+        gain.gain.setValueAtTime(0.22, now);
+        gain.gain.linearRampToValueAtTime(0.001, now + 0.45);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.46);
+      }
+
+      playCelebration() {
+        if (this.muted) return;
+        this.init();
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        const notes = [523.25, 659.25, 783.99, 1046.50];
+        notes.forEach((f, i) => {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(f, now + i * 0.08);
+          gain.gain.setValueAtTime(0.2, now + i * 0.08);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.08 + 0.5);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(now + i * 0.08);
+          osc.stop(now + i * 0.08 + 0.52);
+        });
+      }
+
+      playGameOver() {
+        if (this.muted) return;
+        this.init();
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(320, now);
+        osc.frequency.exponentialRampToValueAtTime(80, now + 0.6);
+        gain.gain.setValueAtTime(0.22, now);
+        gain.gain.linearRampToValueAtTime(0.001, now + 0.6);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.62);
+      }
+    }
+
+    const audio = new SoundEngine();
+
+    // --- Planet Tier Definitions ---
+    const TIERS = [
+      {
+        id: 'stardust',
+        name: 'Bụi Sao',
+        radius: 17,
+        reward: 4,
+        color: '#c4b5fd',
+        glow: '#a78bfa',
+        face: 'sparkle',
+        droppableWeight: 35
+      },
+      {
+        id: 'asteroid',
+        name: 'Tiểu Hành Tinh',
+        radius: 23,
+        reward: 8,
+        color: '#94a3b8',
+        glow: '#cbd5e1',
+        face: 'cute',
+        droppableWeight: 30
+      },
+      {
+        id: 'moon',
+        name: 'Mặt Trăng',
+        radius: 30,
+        reward: 16,
+        color: '#fef08a',
+        glow: '#fde047',
+        face: 'sleepy',
+        droppableWeight: 22
+      },
+      {
+        id: 'mercury',
+        name: 'Sao Thủy',
+        radius: 38,
+        reward: 32,
+        color: '#67e8f9',
+        glow: '#22d3ee',
+        face: 'happy',
+        droppableWeight: 10
+      },
+      {
+        id: 'mars',
+        name: 'Sao Hỏa',
+        radius: 47,
+        reward: 64,
+        color: '#fb7185',
+        glow: '#f43f5e',
+        face: 'cheeky',
+        droppableWeight: 3
+      },
+      {
+        id: 'earth',
+        name: 'Trái Đất',
+        radius: 57,
+        reward: 128,
+        color: '#38bdf8',
+        glow: '#4ade80',
+        face: 'earth',
+        droppableWeight: 0
+      },
+      {
+        id: 'neptune',
+        name: 'Sao Hải Vương',
+        radius: 68,
+        reward: 256,
+        color: '#60a5fa',
+        glow: '#818cf8',
+        face: 'cool',
+        droppableWeight: 0
+      },
+      {
+        id: 'saturn',
+        name: 'Sao Thổ',
+        radius: 80,
+        reward: 512,
+        color: '#fbbf24',
+        glow: '#f59e0b',
+        face: 'ring',
+        droppableWeight: 0
+      },
+      {
+        id: 'jupiter',
+        name: 'Sao Mộc',
+        radius: 94,
+        reward: 1024,
+        color: '#fb923c',
+        glow: '#ea580c',
+        face: 'proud',
+        droppableWeight: 0
+      },
+      {
+        id: 'sun',
+        name: 'Mặt Trời',
+        radius: 110,
+        reward: 2048,
+        color: '#facc15',
+        glow: '#ef4444',
+        face: 'sun',
+        droppableWeight: 0
+      },
+      {
+        id: 'supernova',
+        name: 'Hố Đen / Siêu Tân Tinh',
+        radius: 128,
+        reward: 5000,
+        color: '#c084fc',
+        glow: '#e879f9',
+        face: 'singularity',
+        droppableWeight: 0
+      }
+    ];
+
+    // --- State Variables ---
+    const canvas = document.getElementById('game-canvas');
+    const ctx = canvas.getContext('2d');
+    const nextCanvas = document.getElementById('nextCanvas');
+    const nextCtx = nextCanvas.getContext('2d');
+
+    const scoreValEl = document.getElementById('scoreVal');
+    const bestValEl = document.getElementById('bestVal');
+    const comboBannerEl = document.getElementById('comboBanner');
+    const pulseBtnEl = document.getElementById('pulseBtn');
+    const soundBtnEl = document.getElementById('soundBtn');
+    const helpBtnEl = document.getElementById('helpBtn');
+    const startModal = document.getElementById('startModal');
+    const endModal = document.getElementById('endModal');
+    const startBtn = document.getElementById('startBtn');
+    const restartBtn = document.getElementById('restartBtn');
+    const evolutionBarEl = document.getElementById('evolutionBar');
+
+    let W = 400;
+    let H = 600;
+    let dpr = 1;
+
+    // Simulation Boundaries
+    let box = {
+      x: 20,
+      y: 90,
+      w: 360,
+      h: 490,
+      dangerY: 130
+    };
+
+    let planets = [];
+    let particles = [];
+    let shockwaves = [];
+    let popups = [];
+
+    let currentTier = 0;
+    let nextTier = 0;
+    let dropperX = 200;
+    let canDrop = true;
+    let dropCooldown = 0;
+
+    let score = 0;
+    let bestScore = 0;
+    let combo = 0;
+    let maxCombo = 0;
+    let comboTimer = 0;
+
+    let pulseCharges = 0;
+    const PULSE_MAX = 3;
+
+    let dangerTimer = 0;
+    const DANGER_LIMIT = 2.8; // seconds allowed above danger line
+    let gameOver = false;
+    let highestTierIndex = 0;
+
+    try {
+      bestScore = Number(localStorage.getItem('cosmoMergeBest') || 0);
+    } catch (_) {}
+
+    // --- Dropper Tier Picker ---
+    function pickRandomDroppableTier() {
+      const droppables = TIERS.filter(t => t.droppableWeight > 0);
+      const totalWeight = droppables.reduce((acc, t) => acc + t.droppableWeight, 0);
+      let rand = Math.random() * totalWeight;
+      for (let i = 0; i < droppables.length; i++) {
+        if (rand < droppables[i].droppableWeight) {
+          return TIERS.indexOf(droppables[i]);
+        }
+        rand -= droppables[i].droppableWeight;
+      }
+      return 0;
+    }
+
+    // --- Evolution Bar Setup ---
+    function initEvolutionBar() {
+      evolutionBarEl.innerHTML = TIERS.map((tier, idx) => `
+        <div class="tier-badge ${idx <= highestTierIndex ? 'unlocked' : ''}" id="badge-${idx}" title="${tier.name}">
+          ${getTierEmoji(idx)}
+        </div>
+        ${idx < TIERS.length - 1 ? '<span class="tier-arrow">›</span>' : ''}
+      `).join('');
+    }
+
+    function getTierEmoji(idx) {
+      const icons = ['✨', '🌑', '🌙', '🩵', '🔴', '🌍', '🔵', '🪐', '🟠', '☀️', '🌀'];
+      return icons[idx] || '⭐';
+    }
+
+    function updateEvolutionBar() {
+      TIERS.forEach((_, idx) => {
+        const el = document.getElementById(`badge-${idx}`);
+        if (el) {
+          if (idx <= highestTierIndex) el.classList.add('unlocked');
+          if (idx === highestTierIndex) el.classList.add('current-highest');
+          else el.classList.remove('current-highest');
+        }
+      });
+    }
+
+    // --- Drawing Planet Avatars ---
+    function drawPlanetAvatar(context, x, y, tierIndex, radius, squashX = 1, squashY = 1, rotation = 0, isScared = false) {
+      const tier = TIERS[tierIndex];
+      context.save();
+      context.translate(x, y);
+      context.rotate(rotation);
+      context.scale(squashX, squashY);
+
+      // Glow behind planet
+      const gradGlow = context.createRadialGradient(0, 0, radius * 0.7, 0, 0, radius * 1.35);
+      gradGlow.addColorStop(0, tier.glow + '44');
+      gradGlow.addColorStop(1, 'transparent');
+      context.fillStyle = gradGlow;
+      context.beginPath();
+      context.arc(0, 0, radius * 1.35, 0, Math.PI * 2);
+      context.fill();
+
+      // Planet body sphere
+      const sphereGrad = context.createRadialGradient(-radius * 0.35, -radius * 0.35, radius * 0.1, 0, 0, radius);
+      sphereGrad.addColorStop(0, '#ffffff');
+      sphereGrad.addColorStop(0.35, tier.color);
+      sphereGrad.addColorStop(0.9, tier.glow);
+      sphereGrad.addColorStop(1, '#050713');
+
+      context.fillStyle = sphereGrad;
+      context.beginPath();
+      context.arc(0, 0, radius, 0, Math.PI * 2);
+      context.fill();
+
+      // Surface features
+      context.save();
+      context.beginPath();
+      context.arc(0, 0, radius - 1, 0, Math.PI * 2);
+      context.clip();
+
+      if (tier.id === 'stardust') {
+        // Sparkling core
+        context.fillStyle = 'rgba(255, 255, 255, 0.7)';
+        context.fillRect(-radius * 0.5, -1, radius, 2);
+        context.fillRect(-1, -radius * 0.5, 2, radius);
+      } else if (tier.id === 'asteroid' || tier.id === 'moon') {
+        // Craters
+        context.fillStyle = 'rgba(0, 0, 0, 0.18)';
+        context.beginPath();
+        context.arc(-radius * 0.35, radius * 0.2, radius * 0.22, 0, Math.PI * 2);
+        context.arc(radius * 0.38, -radius * 0.25, radius * 0.18, 0, Math.PI * 2);
+        context.arc(radius * 0.15, radius * 0.45, radius * 0.14, 0, Math.PI * 2);
+        context.fill();
+      } else if (tier.id === 'earth') {
+        // Continents
+        context.fillStyle = '#4ade80';
+        context.beginPath();
+        context.arc(-radius * 0.2, radius * 0.15, radius * 0.42, 0, Math.PI * 2);
+        context.arc(radius * 0.35, -radius * 0.25, radius * 0.32, 0, Math.PI * 2);
+        context.fill();
+        // White cloud swirls
+        context.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+        context.lineWidth = 3;
+        context.beginPath();
+        context.arc(0, 0, radius * 0.65, 0.2, 1.8);
+        context.stroke();
+      } else if (tier.id === 'jupiter' || tier.id === 'mars') {
+        // Striated gas bands
+        context.fillStyle = 'rgba(0, 0, 0, 0.15)';
+        context.fillRect(-radius, -radius * 0.35, radius * 2, radius * 0.22);
+        context.fillRect(-radius, radius * 0.15, radius * 2, radius * 0.28);
+        // Great spot on Jupiter
+        if (tier.id === 'jupiter') {
+          context.fillStyle = '#dc2626';
+          context.beginPath();
+          context.ellipse(radius * 0.32, radius * 0.25, radius * 0.22, radius * 0.14, 0, 0, Math.PI * 2);
+          context.fill();
+        }
+      } else if (tier.id === 'sun') {
+        // Solar flare swirls
+        context.fillStyle = 'rgba(255, 255, 255, 0.35)';
+        context.beginPath();
+        context.arc(0, 0, radius * 0.6, 0, Math.PI * 2);
+        context.fill();
+      } else if (tier.id === 'supernova') {
+        // Black Hole Singularity Core
+        context.fillStyle = '#05020c';
+        context.beginPath();
+        context.arc(0, 0, radius * 0.58, 0, Math.PI * 2);
+        context.fill();
+        // Photon ring
+        context.strokeStyle = '#e879f9';
+        context.lineWidth = 3;
+        context.beginPath();
+        context.arc(0, 0, radius * 0.65, 0, Math.PI * 2);
+        context.stroke();
+      }
+      context.restore();
+
+      // Saturn Ring (drawn outside the body)
+      if (tier.id === 'saturn') {
+        context.save();
+        context.rotate(Math.PI / 6);
+        context.strokeStyle = 'rgba(253, 224, 71, 0.85)';
+        context.lineWidth = radius * 0.18;
+        context.beginPath();
+        context.ellipse(0, 0, radius * 1.55, radius * 0.38, 0, 0, Math.PI * 2);
+        context.stroke();
+        context.restore();
+      }
+
+      // Cute Eyes & Face
+      const eyeR = Math.max(1.8, radius * 0.09);
+      const eyeOffX = radius * 0.24;
+      const eyeOffY = -radius * 0.08;
+
+      context.fillStyle = '#111827';
+      if (isScared) {
+        // Scared / O-mouth expression
+        context.beginPath();
+        context.arc(-eyeOffX, eyeOffY - 2, eyeR * 1.2, 0, Math.PI * 2);
+        context.arc(eyeOffX, eyeOffY - 2, eyeR * 1.2, 0, Math.PI * 2);
+        context.fill();
+        context.fillStyle = '#ffffff';
+        context.beginPath();
+        context.arc(-eyeOffX + 1, eyeOffY - 3, eyeR * 0.5, 0, Math.PI * 2);
+        context.arc(eyeOffX + 1, eyeOffY - 3, eyeR * 0.5, 0, Math.PI * 2);
+        context.fill();
+        // O mouth
+        context.strokeStyle = '#111827';
+        context.lineWidth = 2;
+        context.beginPath();
+        context.arc(0, eyeOffY + radius * 0.32, eyeR * 1.5, 0, Math.PI * 2);
+        context.stroke();
+      } else {
+        // Happy, cute eyes
+        context.beginPath();
+        context.arc(-eyeOffX, eyeOffY, eyeR, 0, Math.PI * 2);
+        context.arc(eyeOffX, eyeOffY, eyeR, 0, Math.PI * 2);
+        context.fill();
+
+        // Eye highlights
+        context.fillStyle = '#ffffff';
+        context.beginPath();
+        context.arc(-eyeOffX - eyeR * 0.3, eyeOffY - eyeR * 0.3, eyeR * 0.45, 0, Math.PI * 2);
+        context.arc(eyeOffX - eyeR * 0.3, eyeOffY - eyeR * 0.3, eyeR * 0.45, 0, Math.PI * 2);
+        context.fill();
+
+        // Smile
+        context.strokeStyle = '#111827';
+        context.lineWidth = Math.max(1.5, radius * 0.06);
+        context.beginPath();
+        context.arc(0, eyeOffY + radius * 0.16, radius * 0.18, 0.2, Math.PI - 0.2);
+        context.stroke();
+
+        // Cheerful pink blush
+        context.fillStyle = 'rgba(244, 63, 94, 0.38)';
+        context.beginPath();
+        context.arc(-eyeOffX - eyeR * 1.2, eyeOffY + eyeR * 1.3, eyeR * 1.2, 0, Math.PI * 2);
+        context.arc(eyeOffX + eyeR * 1.2, eyeOffY + eyeR * 1.3, eyeR * 1.2, 0, Math.PI * 2);
+        context.fill();
+      }
+
+      context.restore();
+    }
+
+    // --- Next Orb Preview Drawing ---
+    function renderNextPreview() {
+      nextCtx.clearRect(0, 0, nextCanvas.width, nextCanvas.height);
+      const tier = TIERS[nextTier];
+      const cx = nextCanvas.width / 2;
+      const cy = nextCanvas.height / 2;
+      const targetR = Math.min(22, tier.radius * 0.7);
+      drawPlanetAvatar(nextCtx, cx, cy, nextTier, targetR);
+    }
+
+    // --- Particle System ---
+    function spawnBurst(x, y, color, count = 18) {
+      for (let i = 0; i < count; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 40 + Math.random() * 200;
+        particles.push({
+          x,
+          y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          color,
+          radius: 1.5 + Math.random() * 3.5,
+          life: 0.4 + Math.random() * 0.4,
+          maxLife: 0.8
+        });
+      }
+    }
+
+    function spawnShockwave(x, y, radiusMax = 120, color = 'rgba(85, 230, 255, 0.8)') {
+      shockwaves.push({
+        x,
+        y,
+        radius: 10,
+        radiusMax,
+        color,
+        life: 0.35,
+        maxLife: 0.35
+      });
+    }
+
+    function spawnScorePopup(x, y, text, color = '#ffd257') {
+      popups.push({
+        x,
+        y,
+        text,
+        color,
+        vy: -40,
+        life: 0.8
+      });
+    }
+
+    // --- 2D Rigid Body Physics Engine ---
+    class PlanetBody {
+      constructor(tierIndex, x, y, vx = 0, vy = 0) {
+        this.tier = tierIndex;
+        this.radius = TIERS[tierIndex].radius;
+        this.x = x;
+        this.y = y;
+        this.vx = vx;
+        this.vy = vy;
+        this.rotation = Math.random() * Math.PI * 2;
+        this.vRot = (Math.random() - 0.5) * 1.5;
+        this.squashX = 1;
+        this.squashY = 1;
+        this.squashVx = 0;
+        this.squashVy = 0;
+        this.markedForDeletion = false;
+        this.restTimer = 0;
+      }
+
+      update(dt) {
+        // Gravity
+        this.vy += 850 * dt;
+
+        // Position integration
+        this.x += this.vx * dt;
+        this.y += this.vy * dt;
+
+        // Rotation
+        this.rotation += this.vRot * dt;
+
+        // Air damping
+        this.vx *= 0.996;
+        this.vy *= 0.996;
+        this.vRot *= 0.985;
+
+        // Spring squash recovery
+        const k = 180;
+        const damp = 14;
+        const ax = (1 - this.squashX) * k - this.squashVx * damp;
+        const ay = (1 - this.squashY) * k - this.squashVy * damp;
+        this.squashVx += ax * dt;
+        this.squashVy += ay * dt;
+        this.squashX += this.squashVx * dt;
+        this.squashY += this.squashVy * dt;
+      }
+
+      applyImpulse(ix, iy) {
+        this.vx += ix;
+        this.vy += iy;
+      }
+    }
+
+    // --- Collision & Merge Solver ---
+    function resolvePhysics(dt) {
+      const subSteps = 8;
+      const subDt = dt / subSteps;
+
+      for (let s = 0; s < subSteps; s++) {
+        // 1. Update Positions
+        for (let i = 0; i < planets.length; i++) {
+          planets[i].update(subDt);
+        }
+
+        // 2. Resolve Wall Collisions
+        for (let i = 0; i < planets.length; i++) {
+          const p = planets[i];
+          const r = p.radius;
+
+          // Left Wall
+          if (p.x - r < box.x) {
+            p.x = box.x + r;
+            p.vx = -p.vx * 0.35;
+            p.squashX = 0.85;
+            p.squashY = 1.15;
+          }
+          // Right Wall
+          if (p.x + r > box.x + box.w) {
+            p.x = box.x + box.w - r;
+            p.vx = -p.vx * 0.35;
+            p.squashX = 0.85;
+            p.squashY = 1.15;
+          }
+          // Floor Collision
+          const floorY = box.y + box.h;
+          if (p.y + r > floorY) {
+            p.y = floorY - r;
+            if (Math.abs(p.vy) > 20) {
+              audio.playBounce(Math.min(1, Math.abs(p.vy) / 400), p.radius);
+            }
+            p.vy = -p.vy * 0.28;
+            p.vx *= 0.92; // Friction on floor
+            p.squashX = 1.2;
+            p.squashY = 0.82;
+          }
+        }
+
+        // 3. Resolve Planet-Planet Collisions & Merges
+        for (let i = 0; i < planets.length; i++) {
+          for (let j = i + 1; j < planets.length; j++) {
+            const a = planets[i];
+            const b = planets[j];
+            if (a.markedForDeletion || b.markedForDeletion) continue;
+
+            const dx = b.x - a.x;
+            const dy = b.y - a.y;
+            const distSq = dx * dx + dy * dy;
+            const minDist = a.radius + b.radius;
+
+            if (distSq < minDist * minDist) {
+              const dist = Math.sqrt(distSq) || 1;
+              const nx = dx / dist;
+              const ny = dy / dist;
+
+              // Check if they should merge!
+              if (a.tier === b.tier && a.tier < TIERS.length - 1) {
+                // Execute Merge
+                a.markedForDeletion = true;
+                b.markedForDeletion = true;
+
+                const mx = (a.x + b.x) * 0.5;
+                const my = (a.y + b.y) * 0.5;
+                const nextTierIdx = a.tier + 1;
+
+                // Create newly evolved planet
+                const merged = new PlanetBody(nextTierIdx, mx, my, (a.vx + b.vx) * 0.4, Math.min(-120, (a.vy + b.vy) * 0.5));
+                merged.squashX = 1.3;
+                merged.squashY = 0.75;
+                planets.push(merged);
+
+                // Scoring & Combo handling
+                const tierDef = TIERS[nextTierIdx];
+                combo++;
+                comboTimer = 1.6;
+                maxCombo = Math.max(maxCombo, combo);
+
+                const comboMultiplier = 1 + (combo - 1) * 0.35;
+                const earned = Math.round(tierDef.reward * comboMultiplier);
+                score += earned;
+
+                // Update best score
+                if (score > bestScore) {
+                  bestScore = score;
+                  try { localStorage.setItem('cosmoMergeBest', String(bestScore)); } catch (_) {}
+                }
+
+                // Charge Pulse Meter
+                if (pulseCharges < PULSE_MAX) {
+                  pulseCharges++;
+                  updatePulseUI();
+                }
+
+                // Discovery Milestone check
+                if (nextTierIdx > highestTierIndex) {
+                  highestTierIndex = nextTierIdx;
+                  updateEvolutionBar();
+                  if (nextTierIdx >= 9) { // Sun or Singularity
+                    audio.playCelebration();
+                    spawnShockwave(mx, my, 280, '#ffd257');
+                  }
+                }
+
+                // Visual & Audio juice
+                audio.playMerge(nextTierIdx, combo);
+                spawnBurst(mx, my, tierDef.glow, 22);
+                spawnShockwave(mx, my, 80 + nextTierIdx * 8, tierDef.glow);
+                spawnScorePopup(mx, my - 20, `+${earned}${combo > 1 ? ` (x${combo})` : ''}`, tierDef.color);
+
+                updateHUD();
+                break;
+              }
+
+              // Elastic circle collision resolution
+              const overlap = minDist - dist;
+              const percent = 0.8;
+              const slop = 0.01;
+              const sep = Math.max(overlap - slop, 0) / 2 * percent;
+
+              a.x -= nx * sep;
+              a.y -= ny * sep;
+              b.x += nx * sep;
+              b.y += ny * sep;
+
+              // Relative velocity
+              const rvx = b.vx - a.vx;
+              const rvy = b.vy - a.vy;
+              const velAlongNormal = rvx * nx + rvy * ny;
+
+              if (velAlongNormal < 0) {
+                const restitution = 0.22;
+                const impulseMag = -(1 + restitution) * velAlongNormal / 2;
+
+                a.vx -= nx * impulseMag;
+                a.vy -= ny * impulseMag;
+                b.vx += nx * impulseMag;
+                b.vy += ny * impulseMag;
+
+                // Tangential friction
+                const tx = -ny;
+                const ty = nx;
+                const velAlongTangent = rvx * tx + rvy * ty;
+                const friction = 0.12;
+                a.vx += tx * velAlongTangent * friction;
+                a.vy += ty * velAlongTangent * friction;
+                b.vx -= tx * velAlongTangent * friction;
+                b.vy -= ty * velAlongTangent * friction;
+
+                // Soft squash on impact
+                if (Math.abs(velAlongNormal) > 30) {
+                  a.squashX = 1.1;
+                  a.squashY = 0.9;
+                  b.squashX = 1.1;
+                  b.squashY = 0.9;
+                }
+              }
+            }
+          }
+        }
+
+        // Clean up merged planets
+        planets = planets.filter(p => !p.markedForDeletion);
+      }
+    }
+
+    // --- Dropper Actions ---
+    function executeDrop() {
+      if (!canDrop || gameOver || dropCooldown > 0) return;
+
+      const tier = currentTier;
+      const r = TIERS[tier].radius;
+      const clampedX = Math.max(box.x + r + 4, Math.min(box.x + box.w - r - 4, dropperX));
+      const spawnY = box.dangerY - r - 12;
+
+      const newPlanet = new PlanetBody(tier, clampedX, spawnY, 0, 50);
+      planets.push(newPlanet);
+
+      audio.playDrop();
+      spawnBurst(clampedX, spawnY, TIERS[tier].glow, 8);
+
+      currentTier = nextTier;
+      nextTier = pickRandomDroppableTier();
+      renderNextPreview();
+
+      canDrop = false;
+      dropCooldown = 0.42;
+    }
+
+    // --- Shockwave Ability (Sóng Trọng Lực) ---
+    function triggerGravityPulse() {
+      if (pulseCharges < PULSE_MAX || gameOver) return;
+      pulseCharges = 0;
+      updatePulseUI();
+
+      audio.playPulse();
+      const cx = box.x + box.w * 0.5;
+      const cy = box.y + box.h * 0.65;
+      spawnShockwave(cx, cy, 260, 'rgba(85, 230, 255, 0.9)');
+
+      // Apply upward and outward gentle dispersal force to loosen clusters
+      planets.forEach(p => {
+        const dx = p.x - cx;
+        const dy = p.y - cy;
+        const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+        const force = Math.max(120, 360 - dist * 0.8);
+        p.applyImpulse((dx / dist) * force * 0.6, -force * 1.1);
+        p.squashX = 0.85;
+        p.squashY = 1.25;
+      });
+
+      spawnScorePopup(cx, cy - 40, '🌀 SÓNG TRỌNG LỰC!', '#55e6ff');
+    }
+
+    function updatePulseUI() {
+      pulseBtnEl.disabled = pulseCharges < PULSE_MAX;
+      if (pulseCharges >= PULSE_MAX) {
+        pulseBtnEl.classList.add('ready');
+        pulseBtnEl.innerHTML = '<span class="pulse-gauge"></span> SẴN SÀNG! (Nhấn để Rung)';
+      } else {
+        pulseBtnEl.classList.remove('ready');
+        pulseBtnEl.innerHTML = `<span class="pulse-gauge"></span> Sóng Trọng Lực (${pulseCharges}/${PULSE_MAX})`;
+      }
+    }
+
+    // --- Danger / Game Over Detection ---
+    function checkDangerStatus(dt) {
+      let isBreaching = false;
+      const dangerThreshold = box.dangerY;
+
+      for (let i = 0; i < planets.length; i++) {
+        const p = planets[i];
+        // Only trigger danger if the planet has already fallen and settled near the top
+        if (p.y - p.radius < dangerThreshold && p.vy > -15) {
+          isBreaching = true;
+          break;
+        }
+      }
+
+      if (isBreaching) {
+        dangerTimer += dt;
+        if (dangerTimer >= DANGER_LIMIT && !gameOver) {
+          triggerGameOver();
+        }
+      } else {
+        dangerTimer = Math.max(0, dangerTimer - dt * 1.5);
+      }
+    }
+
+    function triggerGameOver() {
+      gameOver = true;
+      audio.playGameOver();
+
+      document.getElementById('endScoreVal').textContent = Math.floor(score).toLocaleString('vi-VN');
+      document.getElementById('endBestVal').textContent = Math.floor(bestScore).toLocaleString('vi-VN');
+      document.getElementById('endHighestPlanet').textContent = TIERS[highestTierIndex].name;
+      document.getElementById('endComboVal').textContent = `x${Math.max(1, maxCombo)}`;
+      document.getElementById('endHeroIcon').textContent = getTierEmoji(highestTierIndex);
+
+      const flag = document.getElementById('newBestFlag');
+      if (score >= bestScore && score > 0) {
+        flag.textContent = '🔥 KỶ LỤC MỚI CỦA BẠN!';
+      } else {
+        flag.textContent = '';
+      }
+
+      endModal.classList.remove('hidden');
+    }
+
+    // --- Reset Game ---
+    function resetGame() {
+      planets = [];
+      particles = [];
+      shockwaves = [];
+      popups = [];
+      score = 0;
+      combo = 0;
+      maxCombo = 0;
+      comboTimer = 0;
+      pulseCharges = 0;
+      dangerTimer = 0;
+      gameOver = false;
+      highestTierIndex = 0;
+
+      currentTier = pickRandomDroppableTier();
+      nextTier = pickRandomDroppableTier();
+      renderNextPreview();
+      updateEvolutionBar();
+      updateHUD();
+      updatePulseUI();
+
+      endModal.classList.add('hidden');
+      startModal.classList.add('hidden');
+    }
+
+    function updateHUD() {
+      scoreValEl.textContent = Math.floor(score).toLocaleString('vi-VN');
+      bestValEl.textContent = Math.floor(bestScore).toLocaleString('vi-VN');
+    }
+
+    // --- Resize Canvas to Container ---
+    function handleResize() {
+      const viewport = document.getElementById('viewport');
+      dpr = window.devicePixelRatio || 1;
+      W = viewport.clientWidth;
+      H = viewport.clientHeight;
+
+      canvas.width = W * dpr;
+      canvas.height = H * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      // Adapt Chamber dimensions
+      const padX = Math.max(14, Math.floor(W * 0.05));
+      box.x = padX;
+      box.w = W - padX * 2;
+      box.dangerY = Math.max(90, Math.floor(H * 0.17));
+      box.y = box.dangerY - 20;
+      box.h = H - box.y - 18;
+    }
+
+    window.addEventListener('resize', handleResize);
+
+    // --- Input Handlers ---
+    function setDropperX(clientX) {
+      const rect = canvas.getBoundingClientRect();
+      const localX = clientX - rect.left;
+      const r = TIERS[currentTier] ? TIERS[currentTier].radius : 20;
+      dropperX = Math.max(box.x + r + 4, Math.min(box.x + box.w - r - 4, localX));
+    }
+
+    // Pointer / Touch Events
+    let isPointerDown = false;
+    canvas.addEventListener('pointerdown', (e) => {
+      audio.init();
+      isPointerDown = true;
+      setDropperX(e.clientX);
+    });
+
+    canvas.addEventListener('pointermove', (e) => {
+      if (isPointerDown || e.pointerType === 'mouse') {
+        setDropperX(e.clientX);
+      }
+    });
+
+    window.addEventListener('pointerup', () => {
+      if (isPointerDown) {
+        isPointerDown = false;
+        executeDrop();
+      }
+    });
+
+    // Keyboard Shortcuts
+    window.addEventListener('keydown', (e) => {
+      if (gameOver) return;
+      if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+        dropperX = Math.max(box.x + 20, dropperX - 25);
+      } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+        dropperX = Math.min(box.x + box.w - 20, dropperX + 25);
+      } else if (e.key === 'ArrowDown' || e.key === 'Enter') {
+        audio.init();
+        executeDrop();
+      } else if (e.key === ' ') {
+        audio.init();
+        e.preventDefault();
+        if (pulseCharges >= PULSE_MAX) {
+          triggerGravityPulse();
+        } else {
+          executeDrop();
+        }
+      }
+    });
+
+    // Button interactions
+    pulseBtnEl.addEventListener('click', () => {
+      audio.init();
+      triggerGravityPulse();
+    });
+
+    soundBtnEl.addEventListener('click', () => {
+      const isMuted = audio.toggleMute();
+      soundBtnEl.textContent = isMuted ? '🔇' : '🔊';
+    });
+
+    if (audio.muted) {
+      soundBtnEl.textContent = '🔇';
+    }
+
+    helpBtnEl.addEventListener('click', () => {
+      startModal.classList.remove('hidden');
+    });
+
+    startBtn.addEventListener('click', () => {
+      audio.init();
+      startModal.classList.add('hidden');
+    });
+
+    restartBtn.addEventListener('click', () => {
+      audio.init();
+      resetGame();
+    });
+
+    // --- Main Render Loop ---
+    let lastTime = performance.now();
+
+    function render(currentTime) {
+      const dt = Math.min(0.04, (currentTime - lastTime) / 1000);
+      lastTime = currentTime;
+
+      // Update Cool-downs & Timers
+      if (dropCooldown > 0) {
+        dropCooldown -= dt;
+        if (dropCooldown <= 0) canDrop = true;
+      }
+
+      if (comboTimer > 0) {
+        comboTimer -= dt;
+        if (comboTimer <= 0) {
+          combo = 0;
+          comboBannerEl.classList.remove('active');
+        } else {
+          comboBannerEl.classList.add('active');
+          comboBannerEl.innerHTML = `<span aria-hidden="true">⚡</span> COMBO x${combo}!`;
+        }
+      }
+
+      // Physics integration
+      if (!gameOver) {
+        resolvePhysics(dt);
+        checkDangerStatus(dt);
+      }
+
+      // Clear Frame
+      ctx.clearRect(0, 0, W, H);
+
+      // 1. Draw Cosmic Chamber Container Box
+      ctx.save();
+      // Outer glow of jar
+      ctx.shadowColor = 'rgba(85, 230, 255, 0.12)';
+      ctx.shadowBlur = 18;
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.16)';
+      ctx.lineWidth = 3;
+
+      // Chamber glass body
+      ctx.beginPath();
+      ctx.roundRect(box.x, box.y, box.w, box.h, [0, 0, 24, 24]);
+      ctx.fillStyle = 'rgba(12, 16, 36, 0.42)';
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+
+      // 2. Draw Danger Line
+      const dangerRatio = dangerTimer / DANGER_LIMIT;
+      ctx.save();
+      ctx.strokeStyle = dangerRatio > 0 ? `rgba(255, 71, 102, ${0.4 + dangerRatio * 0.6})` : 'rgba(255, 71, 102, 0.25)';
+      ctx.lineWidth = dangerRatio > 0 ? 3 : 1.5;
+      ctx.setLineDash([8, 6]);
+      ctx.beginPath();
+      ctx.moveTo(box.x + 4, box.dangerY);
+      ctx.lineTo(box.x + box.w - 4, box.dangerY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Danger Warning Banner when timer runs
+      if (dangerRatio > 0.15) {
+        ctx.fillStyle = 'rgba(255, 71, 102, 0.9)';
+        ctx.font = 'bold 12px Inter, sans-serif';
+        ctx.textAlign = 'center';
+        const remaining = Math.max(0, DANGER_LIMIT - dangerTimer).toFixed(1);
+        ctx.fillText(`NGUY HIỂM! ${remaining}s`, box.x + box.w * 0.5, box.dangerY - 8);
+      }
+      ctx.restore();
+
+      // 3. Draw Dropper Guide Line & Phantom Planet
+      if (canDrop && !gameOver) {
+        const tier = currentTier;
+        const tierDef = TIERS[tier];
+        const r = tierDef.radius;
+        const clampedX = Math.max(box.x + r + 4, Math.min(box.x + box.w - r - 4, dropperX));
+        const spawnY = box.dangerY - r - 12;
+
+        // Dropper guide beam
+        ctx.save();
+        const beamGrad = ctx.createLinearGradient(0, spawnY, 0, box.y + box.h);
+        beamGrad.addColorStop(0, tierDef.glow + '55');
+        beamGrad.addColorStop(1, 'transparent');
+        ctx.strokeStyle = beamGrad;
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        ctx.moveTo(clampedX, spawnY + r);
+        ctx.lineTo(clampedX, box.y + box.h - 10);
+        ctx.stroke();
+        ctx.restore();
+
+        // Dropper Planet
+        drawPlanetAvatar(ctx, clampedX, spawnY, tier, r);
+      }
+
+      // 4. Draw All Active Planets
+      for (let i = 0; i < planets.length; i++) {
+        const p = planets[i];
+        const isScared = dangerRatio > 0.25 && (p.y - p.radius < box.dangerY + 40);
+        drawPlanetAvatar(ctx, p.x, p.y, p.tier, p.radius, p.squashX, p.squashY, p.rotation, isScared);
+      }
+
+      // 5. Update & Draw Shockwaves
+      for (let i = shockwaves.length - 1; i >= 0; i--) {
+        const sw = shockwaves[i];
+        sw.life -= dt;
+        if (sw.life <= 0) {
+          shockwaves.splice(i, 1);
+          continue;
+        }
+        const prog = 1 - sw.life / sw.maxLife;
+        const curR = 10 + (sw.radiusMax - 10) * prog;
+        ctx.save();
+        ctx.strokeStyle = sw.color;
+        ctx.lineWidth = 3 * (1 - prog);
+        ctx.beginPath();
+        ctx.arc(sw.x, sw.y, curR, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      // 6. Update & Draw Particles
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const pt = particles[i];
+        pt.life -= dt;
+        if (pt.life <= 0) {
+          particles.splice(i, 1);
+          continue;
+        }
+        pt.x += pt.vx * dt;
+        pt.y += pt.vy * dt;
+        pt.vy += 220 * dt; // gravity on particles
+
+        const alpha = pt.life / pt.maxLife;
+        ctx.save();
+        ctx.fillStyle = pt.color;
+        ctx.globalAlpha = alpha;
+        ctx.beginPath();
+        ctx.arc(pt.x, pt.y, pt.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      // 7. Update & Draw Floating Score Popups
+      for (let i = popups.length - 1; i >= 0; i--) {
+        const pop = popups[i];
+        pop.life -= dt;
+        if (pop.life <= 0) {
+          popups.splice(i, 1);
+          continue;
+        }
+        pop.y += pop.vy * dt;
+        const alpha = Math.min(1, pop.life / 0.3);
+        ctx.save();
+        ctx.font = 'bold 15px Inter, sans-serif';
+        ctx.fillStyle = pop.color;
+        ctx.globalAlpha = alpha;
+        ctx.textAlign = 'center';
+        ctx.shadowColor = 'rgba(0,0,0,0.8)';
+        ctx.shadowBlur = 6;
+        ctx.fillText(pop.text, pop.x, pop.y);
+        ctx.restore();
+      }
+
+      requestAnimationFrame(render);
+    }
+
+    // --- Bootstrap ---
+    handleResize();
+    initEvolutionBar();
+    resetGame();
+    document.getElementById('startBestVal').textContent = Math.floor(bestScore).toLocaleString('vi-VN');
+    requestAnimationFrame(render);
+
+  })();
+  </script>
+</body>
+</html>
