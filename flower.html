@@ -1,0 +1,562 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+  <meta name="theme-color" content="#120818">
+  <title>Vườn Hoa Tình Yêu — Love Bloom</title>
+  <style>
+    :root {
+      --bg: #120818;
+      --pink: #ff60a8;
+      --rose: #f43f5e;
+      --gold: #fde047;
+      --purple: #c084fc;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    * { box-sizing: border-box; user-select: none; -webkit-user-select: none; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: var(--bg);
+      color: #fff;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      touch-action: none;
+    }
+    canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    .top-bar {
+      position: absolute;
+      top: calc(14px + var(--safe-top));
+      left: 16px;
+      right: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 20;
+      pointer-events: none;
+    }
+    .top-bar > * { pointer-events: auto; }
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 8px 14px;
+      border-radius: 99px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #f1f5f9;
+      font-size: 13px;
+      font-weight: 800;
+      text-decoration: none;
+      backdrop-filter: blur(8px);
+      transition: background 0.15s, color 0.15s;
+    }
+    .back-btn:hover { background: rgba(255, 255, 255, 0.18); color: #fff; }
+    .icon-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #fff;
+      display: grid;
+      place-items: center;
+      font-size: 15px;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+      transition: transform 0.15s, background 0.15s;
+    }
+    .icon-btn:hover { transform: scale(1.08); background: rgba(255, 255, 255, 0.18); }
+
+    /* Center Romantic Message */
+    .hero-banner {
+      position: absolute;
+      top: calc(70px + var(--safe-top));
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 15;
+      text-align: center;
+      pointer-events: none;
+      width: min(90vw, 520px);
+    }
+    .hero-banner h1 {
+      margin: 0;
+      font-size: clamp(26px, 6vw, 42px);
+      font-weight: 950;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      background: linear-gradient(135deg, #fff, var(--pink) 50%, #fda4af);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 0 25px rgba(244, 63, 94, 0.5));
+    }
+    .hero-banner p {
+      margin: 6px 0 0;
+      font-size: 12px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.7);
+      font-weight: 700;
+    }
+
+    /* Bottom Action Toolbar */
+    .bottom-bar {
+      position: absolute;
+      bottom: calc(20px + var(--safe-bottom));
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .action-btn {
+      padding: 11px 22px;
+      border-radius: 99px;
+      border: 1px solid rgba(255, 96, 168, 0.3);
+      background: rgba(36, 15, 38, 0.8);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 900;
+      cursor: pointer;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(255, 96, 168, 0.3);
+      transition: transform 0.15s, background 0.15s;
+    }
+    .action-btn:hover {
+      transform: translateY(-2px);
+      background: rgba(255, 96, 168, 0.35);
+    }
+
+    /* Romantic Letter Modal */
+    .modal-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: rgba(18, 8, 24, 0.82);
+      backdrop-filter: blur(12px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s;
+    }
+    .modal-overlay.show { opacity: 1; pointer-events: auto; }
+    .letter-card {
+      width: min(420px, 95%);
+      background: linear-gradient(160deg, #2b132f, #18091d);
+      border: 1px solid rgba(255, 96, 168, 0.3);
+      border-radius: 26px;
+      padding: 32px 26px;
+      text-align: center;
+      box-shadow: 0 25px 80px rgba(0, 0, 0, 0.8), 0 0 50px rgba(255, 96, 168, 0.2);
+    }
+    .letter-card h2 {
+      margin: 0 0 8px;
+      font-size: 24px;
+      font-weight: 950;
+      background: linear-gradient(135deg, #fff, var(--pink));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .letter-card p {
+      color: #cbd5e1;
+      font-size: 13px;
+      margin: 0 0 18px;
+      line-height: 1.55;
+    }
+    .letter-textarea {
+      width: 100%;
+      height: 100px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      background: rgba(255, 255, 255, 0.06);
+      color: #fff;
+      font-family: inherit;
+      font-size: 14px;
+      resize: none;
+      outline: none;
+      margin-bottom: 18px;
+    }
+    .letter-textarea:focus { border-color: var(--pink); }
+    .send-letter-btn {
+      width: 100%;
+      padding: 13px;
+      border-radius: 14px;
+      border: 0;
+      background: linear-gradient(135deg, var(--pink), var(--rose));
+      color: #fff;
+      font-weight: 950;
+      font-size: 15px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="bloomCanvas"></canvas>
+
+  <header class="top-bar">
+    <a class="back-btn" href="./">
+      <span aria-hidden="true">←</span> Sảnh game
+    </a>
+    <div style="display:flex; gap:8px;">
+      <button id="soundBtn" class="icon-btn" title="Âm nhạc lãng mạn">🔊</button>
+    </div>
+  </header>
+
+  <div class="hero-banner">
+    <h1 id="heroTitle">Vườn Hoa Tình Yêu 🌸</h1>
+    <p>Chạm vào màn hình để gieo hoa nở rộ</p>
+  </div>
+
+  <div class="bottom-bar">
+    <button id="letterBtn" class="action-btn">
+      💌 Gửi Lời Yêu Thương
+    </button>
+  </div>
+
+  <!-- Letter Modal -->
+  <div id="letterModal" class="modal-overlay">
+    <div class="letter-card">
+      <h2>💌 Bức Thư Tình</h2>
+      <p>Viết những dòng thư chân thành gửi đến người bạn thương yêu nhất.</p>
+      <textarea id="letterText" class="letter-textarea">Gửi em, mỗi đóa hoa nở trong khu vườn này đều là một lời yêu thương chân thành nhất anh dành tặng riêng em. Mãi bên nhau nhé! 💖</textarea>
+      <button id="sendLetterBtn" class="send-letter-btn">NỞ RỘ HOA TÌNH YÊU</button>
+    </div>
+  </div>
+
+  <script>
+  (() => {
+    'use strict';
+
+    // --- Romantic Web Audio Kalimba / Harp Chimes ---
+    class BloomAudio {
+      constructor() {
+        this.ctx = null;
+        this.muted = false;
+        try { this.muted = localStorage.getItem('flowerMuted') === '1'; } catch (_) {}
+      }
+
+      init() {
+        if (!this.ctx) {
+          const AC = window.AudioContext || window.webkitAudioContext;
+          if (AC) this.ctx = new AC();
+        }
+        if (this.ctx && this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      }
+
+      playBloomChime() {
+        if (this.muted) return;
+        this.init();
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        const notes = [329.63, 392.00, 493.88, 587.33, 659.25, 783.99, 987.77]; // E minor / G major romantic scale
+        const chord = [
+          notes[Math.floor(Math.random() * notes.length)],
+          notes[Math.floor(Math.random() * notes.length)] * 1.5
+        ];
+
+        chord.forEach((freq, idx) => {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(freq, now + idx * 0.08);
+          gain.gain.setValueAtTime(0.12, now + idx * 0.08);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.6);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(now + idx * 0.08);
+          osc.stop(now + idx * 0.08 + 0.62);
+        });
+      }
+
+      toggleMute() {
+        this.muted = !this.muted;
+        try { localStorage.setItem('flowerMuted', this.muted ? '1' : '0'); } catch (_) {}
+        return this.muted;
+      }
+    }
+
+    const sound = new BloomAudio();
+
+    // --- Canvas & Core Setup ---
+    const canvas = document.getElementById('bloomCanvas');
+    const ctx = canvas.getContext('2d');
+    const soundBtn = document.getElementById('soundBtn');
+    const letterBtn = document.getElementById('letterBtn');
+    const letterModal = document.getElementById('letterModal');
+    const letterText = document.getElementById('letterText');
+    const sendLetterBtn = document.getElementById('sendLetterBtn');
+    const heroTitle = document.getElementById('heroTitle');
+
+    let W = window.innerWidth;
+    let H = window.innerHeight;
+    let dpr = window.devicePixelRatio || 1;
+
+    let flowers = [];
+    let petals = [];
+    let sparkleParticles = [];
+
+    const FLOWER_PALETTES = [
+      { petal: '#ff60a8', core: '#fde047', glow: '#f43f5e' }, // Romantic Pink
+      { petal: '#f43f5e', core: '#ffd257', glow: '#be123c' }, // Crimson Rose
+      { petal: '#c084fc', core: '#67e8f9', glow: '#8b5cf6' }, // Mystic Lavender
+      { petal: '#fde047', core: '#f97316', glow: '#eab308' }  // Golden Lotus
+    ];
+
+    function resize() {
+      W = window.innerWidth;
+      H = window.innerHeight;
+      dpr = window.devicePixelRatio || 1;
+      canvas.width = W * dpr;
+      canvas.height = H * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      // Initialize falling cherry blossom petals
+      if (petals.length === 0) {
+        petals = Array.from({ length: 55 }, () => createPetal(true));
+      }
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    function createPetal(randomY = false) {
+      return {
+        x: Math.random() * W,
+        y: randomY ? Math.random() * H : -20,
+        vx: 15 + Math.random() * 30,
+        vy: 35 + Math.random() * 50,
+        rotX: Math.random() * Math.PI,
+        rotY: Math.random() * Math.PI,
+        vRotX: 1 + Math.random() * 2,
+        vRotY: 1.5 + Math.random() * 3,
+        size: 9 + Math.random() * 8,
+        color: Math.random() < 0.6 ? '#fda4af' : '#f472b6'
+      };
+    }
+
+    // --- Sprout Blooming Flower ---
+    function sproutFlower(x, y, palette = null) {
+      sound.playBloomChime();
+      const pal = palette || FLOWER_PALETTES[Math.floor(Math.random() * FLOWER_PALETTES.length)];
+
+      flowers.push({
+        x,
+        y,
+        progress: 0,
+        maxRadius: 40 + Math.random() * 35,
+        petalsCount: 12 + Math.floor(Math.random() * 6),
+        palette: pal,
+        rot: Math.random() * Math.PI * 2,
+        vRot: (Math.random() - 0.5) * 0.2,
+        life: 0
+      });
+
+      // Sparks
+      for (let i = 0; i < 15; i++) {
+        const a = Math.random() * Math.PI * 2;
+        const spd = 30 + Math.random() * 90;
+        sparkleParticles.push({
+          x,
+          y,
+          vx: Math.cos(a) * spd,
+          vy: Math.sin(a) * spd,
+          color: pal.core,
+          life: 0.8 + Math.random() * 0.5,
+          maxLife: 1.3
+        });
+      }
+    }
+
+    // --- User Interaction ---
+    canvas.addEventListener('pointerdown', (e) => {
+      sound.init();
+      const rect = canvas.getBoundingClientRect();
+      const px = e.clientX - rect.left;
+      const py = e.clientY - rect.top;
+      sproutFlower(px, py);
+    });
+
+    letterBtn.addEventListener('click', () => {
+      sound.init();
+      letterModal.classList.add('show');
+      letterText.focus();
+    });
+
+    sendLetterBtn.addEventListener('click', () => {
+      letterModal.classList.remove('show');
+      heroTitle.textContent = 'Dành Riêng Cho Em 💖';
+
+      // Sprout bouquet of flowers!
+      for (let i = 0; i < 7; i++) {
+        setTimeout(() => {
+          const x = W * 0.2 + (i % 4) * (W * 0.2) + (Math.random() - 0.5) * 50;
+          const y = H * 0.35 + Math.floor(i / 4) * (H * 0.25) + (Math.random() - 0.5) * 40;
+          sproutFlower(x, y);
+        }, i * 220);
+      }
+    });
+
+    letterModal.addEventListener('click', (e) => {
+      if (e.target === letterModal) letterModal.classList.remove('show');
+    });
+
+    soundBtn.addEventListener('click', () => {
+      const isMuted = sound.toggleMute();
+      soundBtn.textContent = isMuted ? '🔇' : '🔊';
+    });
+    if (sound.muted) soundBtn.textContent = '🔇';
+
+    // Spawn 2 initial flowers in center
+    setTimeout(() => {
+      sproutFlower(W * 0.5, H * 0.52);
+    }, 300);
+
+    // --- Main Render Loop ---
+    let lastTime = performance.now();
+
+    function render(now) {
+      const dt = Math.min(0.04, (now - lastTime) / 1000);
+      lastTime = now;
+
+      // Soft Dark Gradient Background
+      const bgGrad = ctx.createRadialGradient(W * 0.5, H * 0.5, 50, W * 0.5, H * 0.5, Math.max(W, H) * 0.8);
+      bgGrad.addColorStop(0, '#230e2b');
+      bgGrad.addColorStop(0.6, '#130819');
+      bgGrad.addColorStop(1, '#08030c');
+      ctx.fillStyle = bgGrad;
+      ctx.fillRect(0, 0, W, H);
+
+      // 1. Draw Blooming Flowers
+      for (let i = 0; i < flowers.length; i++) {
+        const f = flowers[i];
+        f.life += dt;
+        if (f.progress < 1) {
+          f.progress = Math.min(1, f.progress + dt * 1.4);
+        }
+        f.rot += f.vRot * dt;
+
+        ctx.save();
+        ctx.translate(f.x, f.y);
+        ctx.rotate(f.rot);
+
+        const currentR = f.maxRadius * f.progress;
+
+        // Soft floral halo glow
+        const glow = ctx.createRadialGradient(0, 0, currentR * 0.3, 0, 0, currentR * 1.5);
+        glow.addColorStop(0, f.palette.glow + '44');
+        glow.addColorStop(1, 'transparent');
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(0, 0, currentR * 1.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Layered Petals
+        const petalLayers = [0.65, 0.85, 1.0];
+        petalLayers.forEach((layerScale, layerIdx) => {
+          const count = f.petalsCount - layerIdx * 2;
+          for (let p = 0; p < count; p++) {
+            const angle = (p / count) * Math.PI * 2 + layerIdx * 0.3;
+            const r = currentR * layerScale;
+
+            ctx.save();
+            ctx.rotate(angle);
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.quadraticCurveTo(r * 0.4, -r * 0.5, 0, -r);
+            ctx.quadraticCurveTo(-r * 0.4, -r * 0.5, 0, 0);
+
+            const petalGrad = ctx.createLinearGradient(0, 0, 0, -r);
+            petalGrad.addColorStop(0, '#ffffff');
+            petalGrad.addColorStop(0.4, f.palette.petal);
+            petalGrad.addColorStop(1, f.palette.glow);
+
+            ctx.fillStyle = petalGrad;
+            ctx.shadowColor = f.palette.glow;
+            ctx.shadowBlur = 10;
+            ctx.fill();
+            ctx.restore();
+          }
+        });
+
+        // Flower Stamen Center
+        const coreR = Math.max(3, currentR * 0.22);
+        ctx.fillStyle = f.palette.core;
+        ctx.shadowColor = f.palette.core;
+        ctx.shadowBlur = 12;
+        ctx.beginPath();
+        ctx.arc(0, 0, coreR, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.restore();
+      }
+
+      // 2. Draw Falling Cherry Blossom Petals (3D fluttering effect)
+      for (let i = 0; i < petals.length; i++) {
+        const p = petals[i];
+        p.x += (p.vx + Math.sin(now * 0.002 + i) * 20) * dt;
+        p.y += p.vy * dt;
+        p.rotX += p.vRotX * dt;
+        p.rotY += p.vRotY * dt;
+
+        if (p.y > H + 30 || p.x > W + 30) {
+          petals[i] = createPetal();
+          continue;
+        }
+
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rotX);
+        ctx.scale(Math.cos(p.rotY), 1);
+
+        ctx.fillStyle = p.color;
+        ctx.shadowColor = 'rgba(244, 63, 94, 0.4)';
+        ctx.shadowBlur = 6;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, p.size * 0.6, p.size, Math.PI / 4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      // 3. Draw Sparkles
+      for (let i = sparkleParticles.length - 1; i >= 0; i--) {
+        const sp = sparkleParticles[i];
+        sp.life -= dt;
+        if (sp.life <= 0) { sparkleParticles.splice(i, 1); continue; }
+        sp.x += sp.vx * dt;
+        sp.y += sp.vy * dt;
+
+        ctx.save();
+        ctx.fillStyle = sp.color;
+        ctx.shadowColor = sp.color;
+        ctx.shadowBlur = 8;
+        ctx.globalAlpha = sp.life / sp.maxLife;
+        ctx.beginPath();
+        ctx.arc(sp.x, sp.y, 1.8, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      requestAnimationFrame(render);
+    }
+
+    requestAnimationFrame(render);
+  })();
+  </script>
+</body>
+</html>

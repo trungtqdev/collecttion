@@ -1,0 +1,707 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+  <meta name="theme-color" content="#03040c">
+  <title>Pháo Hoa Rực Rỡ — Fireworks Show</title>
+  <style>
+    :root {
+      --bg: #03040c;
+      --text: #f3f6ff;
+      --gold: #ffd257;
+      --pink: #ff4d94;
+      --cyan: #4deeff;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    * { box-sizing: border-box; user-select: none; -webkit-user-select: none; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      touch-action: manipulation;
+    }
+    canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    /* Top Bar */
+    .top-bar {
+      position: absolute;
+      top: calc(14px + var(--safe-top));
+      left: 16px;
+      right: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 20;
+      pointer-events: none;
+    }
+    .top-bar > * { pointer-events: auto; }
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 8px 14px;
+      border-radius: 99px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #cbd5e1;
+      font-size: 13px;
+      font-weight: 800;
+      text-decoration: none;
+      backdrop-filter: blur(8px);
+      transition: background 0.15s, color 0.15s;
+    }
+    .back-btn:hover { background: rgba(255, 255, 255, 0.18); color: #fff; }
+    .actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .icon-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #fff;
+      display: grid;
+      place-items: center;
+      font-size: 15px;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+      transition: transform 0.15s, background 0.15s;
+    }
+    .icon-btn:hover { transform: scale(1.08); background: rgba(255, 255, 255, 0.18); }
+
+    /* Center Wish Banner */
+    .wish-banner {
+      position: absolute;
+      top: calc(75px + var(--safe-top));
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 15;
+      text-align: center;
+      pointer-events: none;
+      width: min(90vw, 560px);
+    }
+    .wish-text {
+      margin: 0;
+      font-size: clamp(26px, 6vw, 44px);
+      font-weight: 950;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      background: linear-gradient(135deg, #fff, var(--gold) 45%, var(--pink) 85%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 0 35px rgba(255, 210, 87, 0.5);
+      animation: pulseGlow 3s ease-in-out infinite alternate;
+    }
+    @keyframes pulseGlow {
+      from { filter: drop-shadow(0 0 12px rgba(255, 210, 87, 0.4)); transform: scale(0.98); }
+      to { filter: drop-shadow(0 0 25px rgba(255, 77, 148, 0.6)); transform: scale(1.02); }
+    }
+    .wish-sub {
+      margin-top: 6px;
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.65);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+
+    /* Bottom Toolbar */
+    .toolbar {
+      position: absolute;
+      bottom: calc(20px + var(--safe-bottom));
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 16px;
+      border-radius: 99px;
+      background: rgba(14, 18, 36, 0.75);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      backdrop-filter: blur(12px);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    }
+    .tool-btn {
+      background: none;
+      border: 0;
+      color: #cbd5e1;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 99px;
+      transition: background 0.15s, color 0.15s;
+    }
+    .tool-btn:hover, .tool-btn.active {
+      background: rgba(255, 255, 255, 0.15);
+      color: #fff;
+    }
+    .tool-btn.active {
+      color: var(--gold);
+    }
+
+    /* Wish Modal */
+    .modal-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: rgba(3, 4, 12, 0.78);
+      backdrop-filter: blur(10px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s;
+    }
+    .modal-overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .modal-box {
+      width: min(420px, 95%);
+      background: linear-gradient(160deg, #161b36, #0e1224);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 26px;
+      padding: 28px 24px;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), 0 0 40px rgba(255, 210, 87, 0.12);
+    }
+    .modal-title {
+      font-size: 24px;
+      font-weight: 950;
+      margin: 0 0 8px;
+      background: linear-gradient(135deg, #fff, var(--gold));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .modal-desc {
+      color: #94a3b8;
+      font-size: 13px;
+      margin: 0 0 18px;
+    }
+    .modal-input {
+      width: 100%;
+      padding: 13px 16px;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      background: rgba(255, 255, 255, 0.06);
+      color: #fff;
+      font-size: 15px;
+      font-weight: 700;
+      outline: none;
+      margin-bottom: 16px;
+      text-align: center;
+      transition: border-color 0.15s;
+    }
+    .modal-input:focus { border-color: var(--gold); }
+    .quick-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+    .quick-tag {
+      padding: 5px 10px;
+      border-radius: 99px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #cbd5e1;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+    .quick-tag:hover { background: rgba(255, 210, 87, 0.2); color: var(--gold); }
+    .save-btn {
+      width: 100%;
+      padding: 13px;
+      border-radius: 14px;
+      border: 0;
+      background: linear-gradient(135deg, var(--gold), #ff8f5a);
+      color: #050714;
+      font-size: 15px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="fireworksCanvas"></canvas>
+
+  <header class="top-bar">
+    <a class="back-btn" href="./">
+      <span aria-hidden="true">←</span> Sảnh game
+    </a>
+    <div class="actions">
+      <button id="soundBtn" class="icon-btn" title="Bật/Tắt âm thanh">🔊</button>
+      <button id="editBtn" class="icon-btn" title="Đổi lời chúc">✍️</button>
+    </div>
+  </header>
+
+  <div class="wish-banner">
+    <h1 class="wish-text" id="wishDisplay">Chúc Mừng Năm Mới ✨</h1>
+    <div class="wish-sub">Chạm màn hình để phóng pháo hoa</div>
+  </div>
+
+  <nav class="toolbar">
+    <button id="autoBtn" class="tool-btn active">
+      <span>🎆</span> Bắn tự động: BẬT
+    </button>
+    <button id="heartBtn" class="tool-btn">
+      <span>💖</span> Kiểu: Ngẫu nhiên
+    </button>
+  </nav>
+
+  <!-- Edit Wish Modal -->
+  <div id="modalOverlay" class="modal-overlay">
+    <div class="modal-box">
+      <h2 class="modal-title">Gửi Gắm Lời Chúc</h2>
+      <p class="modal-desc">Nhập thông điệp yêu thương hoặc chọn lời chúc nhanh dưới đây.</p>
+      <input type="text" id="wishInput" class="modal-input" maxlength="40" placeholder="Nhập lời chúc của bạn..." value="Chúc Mừng Năm Mới ✨">
+      <div class="quick-tags">
+        <span class="quick-tag">Chúc Mừng Năm Mới ✨</span>
+        <span class="quick-tag">Vạn Sự Như Ý 🧧</span>
+        <span class="quick-tag">Happy Birthday 🎂</span>
+        <span class="quick-tag">Anh Yêu Em Rất Nhiều 💖</span>
+        <span class="quick-tag">Mãi Mãi Bên Nhau 💍</span>
+        <span class="quick-tag">Tự Tin Tỏa Sáng ⭐</span>
+      </div>
+      <button id="saveWishBtn" class="save-btn">HIỂN THỊ LỜI CHÚC</button>
+    </div>
+  </div>
+
+  <script>
+  (() => {
+    'use strict';
+
+    // --- Web Audio Synthesizer for Fireworks ---
+    class FireworksAudio {
+      constructor() {
+        this.ctx = null;
+        this.muted = false;
+        try { this.muted = localStorage.getItem('fireworksMuted') === '1'; } catch (_) {}
+      }
+
+      init() {
+        if (!this.ctx) {
+          const AC = window.AudioContext || window.webkitAudioContext;
+          if (AC) this.ctx = new AC();
+        }
+        if (this.ctx && this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      }
+
+      toggleMute() {
+        this.muted = !this.muted;
+        try { localStorage.setItem('fireworksMuted', this.muted ? '1' : '0'); } catch (_) {}
+        return this.muted;
+      }
+
+      playLaunch() {
+        if (this.muted) return;
+        this.init();
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(260 + Math.random() * 80, now);
+        osc.frequency.exponentialRampToValueAtTime(800 + Math.random() * 300, now + 0.35);
+        gain.gain.setValueAtTime(0.04, now);
+        gain.gain.linearRampToValueAtTime(0.001, now + 0.35);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.36);
+      }
+
+      playExplosion(isBig = false) {
+        if (this.muted) return;
+        this.init();
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+
+        // Sub bass thump
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'triangle';
+        const startFreq = isBig ? 130 : 160;
+        osc.frequency.setValueAtTime(startFreq, now);
+        osc.frequency.exponentialRampToValueAtTime(35, now + 0.45);
+        gain.gain.setValueAtTime(isBig ? 0.35 : 0.22, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.52);
+
+        // Crackle bursts
+        if (isBig) {
+          for (let i = 0; i < 3; i++) {
+            const crackleOsc = this.ctx.createOscillator();
+            const crackleGain = this.ctx.createGain();
+            crackleOsc.type = 'sawtooth';
+            const t = now + 0.15 + i * 0.08;
+            crackleOsc.frequency.setValueAtTime(400 + Math.random() * 600, t);
+            crackleGain.gain.setValueAtTime(0.06, t);
+            crackleGain.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
+            crackleOsc.connect(crackleGain);
+            crackleGain.connect(this.ctx.destination);
+            crackleOsc.start(t);
+            crackleOsc.stop(t + 0.07);
+          }
+        }
+      }
+    }
+
+    const audio = new FireworksAudio();
+
+    // --- Canvas & Rendering ---
+    const canvas = document.getElementById('fireworksCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const soundBtn = document.getElementById('soundBtn');
+    const editBtn = document.getElementById('editBtn');
+    const autoBtn = document.getElementById('autoBtn');
+    const heartBtn = document.getElementById('heartBtn');
+    const modalOverlay = document.getElementById('modalOverlay');
+    const wishInput = document.getElementById('wishInput');
+    const saveWishBtn = document.getElementById('saveWishBtn');
+    const wishDisplay = document.getElementById('wishDisplay');
+
+    let W = window.innerWidth;
+    let H = window.innerHeight;
+    let dpr = window.devicePixelRatio || 1;
+
+    let autoLaunch = true;
+    let autoTimer = 0;
+    let shapeMode = 0; // 0: random, 1: heart, 2: willow, 3: ring
+    const SHAPE_NAMES = ['Ngẫu nhiên', 'Trái Tim 💖', 'Liễu Rủ 🌾', 'Vành Đai 🪐'];
+
+    let rockets = [];
+    let particles = [];
+    let backgroundStars = [];
+
+    // Color Palettes
+    const PALETTES = [
+      ['#ffd257', '#ff4d94', '#ff8533', '#fff'], // Gold / Sunset
+      ['#4deeff', '#a855f7', '#38bdf8', '#fff'], // Cyber Neon
+      ['#ff3e83', '#ff80bf', '#ffb3d9', '#fff'], // Romantic Heart Pink
+      ['#46f59b', '#22d3ee', '#34d399', '#fff'], // Emerald Aurora
+      ['#ff453a', '#ffd60a', '#30d158', '#0a84ff', '#bf5af2'] // Rainbow
+    ];
+
+    function resize() {
+      W = window.innerWidth;
+      H = window.innerHeight;
+      dpr = window.devicePixelRatio || 1;
+      canvas.width = W * dpr;
+      canvas.height = H * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      // Regenerate background starry sky
+      backgroundStars = Array.from({ length: 80 }, () => ({
+        x: Math.random() * W,
+        y: Math.random() * (H * 0.7),
+        r: 0.6 + Math.random() * 1.5,
+        alpha: 0.2 + Math.random() * 0.7,
+        twinkleSpd: 1 + Math.random() * 2
+      }));
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    // --- Rocket Launch ---
+    function launchRocket(targetX = null, targetY = null, forceShape = null) {
+      audio.playLaunch();
+
+      const startX = W * 0.2 + Math.random() * (W * 0.6);
+      const startY = H;
+      const endX = targetX !== null ? targetX : W * 0.15 + Math.random() * (W * 0.7);
+      const endY = targetY !== null ? targetY : H * 0.15 + Math.random() * (H * 0.35);
+
+      const dx = endX - startX;
+      const dy = endY - startY;
+      const duration = 0.9 + Math.random() * 0.3;
+
+      const palette = PALETTES[Math.floor(Math.random() * PALETTES.length)];
+      let shape = forceShape !== null ? forceShape : (shapeMode === 0 ? Math.floor(Math.random() * 3) : shapeMode - 1);
+
+      rockets.push({
+        x: startX,
+        y: startY,
+        vx: dx / duration,
+        vy: dy / duration,
+        targetY: endY,
+        color: palette[0],
+        palette,
+        shape,
+        trail: []
+      });
+    }
+
+    // --- Particle Explosions ---
+    function explode(x, y, palette, shape) {
+      const isBig = Math.random() < 0.4 || shape === 1; // heart is big
+      audio.playExplosion(isBig);
+
+      if (shape === 1) {
+        // Heart-shaped parametric curve
+        const count = 120;
+        for (let i = 0; i < count; i++) {
+          const t = (i / count) * Math.PI * 2;
+          const hx = 16 * Math.pow(Math.sin(t), 3);
+          const hy = -(13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t));
+          const spd = 6.5 + Math.random() * 2.5;
+
+          particles.push({
+            x,
+            y,
+            vx: hx * spd * (0.8 + Math.random() * 0.4),
+            vy: hy * spd * (0.8 + Math.random() * 0.4),
+            color: '#ff3e83',
+            flicker: '#ffd257',
+            radius: 2 + Math.random() * 2,
+            life: 1.4 + Math.random() * 0.6,
+            maxLife: 2.0,
+            decay: 0.965,
+            gravity: 45
+          });
+        }
+      } else if (shape === 2) {
+        // Golden Weeping Willow
+        const count = 140;
+        for (let i = 0; i < count; i++) {
+          const angle = Math.random() * Math.PI * 2;
+          const spd = 30 + Math.random() * 190;
+          particles.push({
+            x,
+            y,
+            vx: Math.cos(angle) * spd,
+            vy: Math.sin(angle) * spd,
+            color: '#ffd257',
+            flicker: '#ffffff',
+            radius: 1.8 + Math.random() * 2,
+            life: 2.2 + Math.random() * 0.8,
+            maxLife: 3.0,
+            decay: 0.955,
+            gravity: 70
+          });
+        }
+      } else {
+        // Spherical Chrysanthemum Burst
+        const count = 100;
+        for (let i = 0; i < count; i++) {
+          const angle = Math.random() * Math.PI * 2;
+          const spd = 40 + Math.random() * 220;
+          const color = palette[Math.floor(Math.random() * palette.length)];
+
+          particles.push({
+            x,
+            y,
+            vx: Math.cos(angle) * spd,
+            vy: Math.sin(angle) * spd,
+            color,
+            flicker: '#ffffff',
+            radius: 2 + Math.random() * 2.5,
+            life: 1.2 + Math.random() * 0.5,
+            maxLife: 1.7,
+            decay: 0.96,
+            gravity: 60
+          });
+        }
+      }
+    }
+
+    // --- User Interaction ---
+    canvas.addEventListener('pointerdown', (e) => {
+      audio.init();
+      const rect = canvas.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const clickY = e.clientY - rect.top;
+      launchRocket(clickX, Math.min(clickY, H * 0.65));
+    });
+
+    autoBtn.addEventListener('click', () => {
+      autoLaunch = !autoLaunch;
+      autoBtn.classList.toggle('active', autoLaunch);
+      autoBtn.innerHTML = `<span>🎆</span> Bắn tự động: ${autoLaunch ? 'BẬT' : 'TẮT'}`;
+    });
+
+    heartBtn.addEventListener('click', () => {
+      shapeMode = (shapeMode + 1) % 4;
+      heartBtn.innerHTML = `<span>${shapeMode === 1 ? '💖' : '🎆'}</span> Kiểu: ${SHAPE_NAMES[shapeMode]}`;
+    });
+
+    soundBtn.addEventListener('click', () => {
+      const isMuted = audio.toggleMute();
+      soundBtn.textContent = isMuted ? '🔇' : '🔊';
+    });
+    if (audio.muted) soundBtn.textContent = '🔇';
+
+    editBtn.addEventListener('click', () => {
+      modalOverlay.classList.add('show');
+      wishInput.focus();
+    });
+
+    saveWishBtn.addEventListener('click', () => {
+      const val = wishInput.value.trim();
+      if (val) {
+        wishDisplay.textContent = val;
+        try { localStorage.setItem('fireworksCustomWish', val); } catch (_) {}
+      }
+      modalOverlay.classList.remove('show');
+      // Launch celebratory burst!
+      launchRocket(W * 0.5, H * 0.3, 1);
+    });
+
+    modalOverlay.addEventListener('click', (e) => {
+      if (e.target === modalOverlay) modalOverlay.classList.remove('show');
+    });
+
+    document.querySelectorAll('.quick-tag').forEach(tag => {
+      tag.addEventListener('click', () => {
+        wishInput.value = tag.textContent;
+      });
+    });
+
+    try {
+      const saved = localStorage.getItem('fireworksCustomWish');
+      if (saved) {
+        wishDisplay.textContent = saved;
+        wishInput.value = saved;
+      }
+    } catch (_) {}
+
+    // --- Main Render Loop ---
+    let lastTime = performance.now();
+
+    function loop(now) {
+      const dt = Math.min(0.04, (now - lastTime) / 1000);
+      lastTime = now;
+
+      // Auto Launching
+      if (autoLaunch) {
+        autoTimer -= dt;
+        if (autoTimer <= 0) {
+          launchRocket();
+          autoTimer = 0.8 + Math.random() * 1.4;
+        }
+      }
+
+      // Sky Trail Fade
+      ctx.fillStyle = 'rgba(3, 4, 12, 0.18)';
+      ctx.fillRect(0, 0, W, H);
+
+      // Draw Twinkling Background Stars
+      for (let i = 0; i < backgroundStars.length; i++) {
+        const s = backgroundStars[i];
+        const alpha = s.alpha * (0.6 + 0.4 * Math.sin(now * 0.002 * s.twinkleSpd + i));
+        ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Update & Draw Rockets
+      for (let i = rockets.length - 1; i >= 0; i--) {
+        const r = rockets[i];
+        r.x += r.vx * dt;
+        r.y += r.vy * dt;
+
+        r.trail.push({ x: r.x, y: r.y });
+        if (r.trail.length > 8) r.trail.shift();
+
+        // Draw rocket tail
+        ctx.save();
+        ctx.strokeStyle = r.color;
+        ctx.shadowColor = r.color;
+        ctx.shadowBlur = 10;
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        for (let j = 0; j < r.trail.length; j++) {
+          const pt = r.trail[j];
+          if (j === 0) ctx.moveTo(pt.x, pt.y);
+          else ctx.lineTo(pt.x, pt.y);
+        }
+        ctx.stroke();
+        ctx.restore();
+
+        // Check if rocket reached apex
+        if (r.y <= r.targetY || r.vy >= 0) {
+          explode(r.x, r.y, r.palette, r.shape);
+          rockets.splice(i, 1);
+        }
+      }
+
+      // Update & Draw Particles
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.life -= dt;
+        if (p.life <= 0) {
+          particles.splice(i, 1);
+          continue;
+        }
+
+        p.vx *= p.decay;
+        p.vy *= p.decay;
+        p.vy += p.gravity * dt;
+
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+
+        const progress = p.life / p.maxLife;
+        const alpha = Math.min(1, progress * 1.5);
+
+        ctx.save();
+        ctx.fillStyle = (Math.random() < 0.15) ? p.flicker : p.color;
+        ctx.shadowColor = p.color;
+        ctx.shadowBlur = 8;
+        ctx.globalAlpha = alpha;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius * progress, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      // Gentle Water Horizon Reflection at bottom
+      const waterY = H - 50;
+      ctx.fillStyle = 'rgba(5, 8, 20, 0.45)';
+      ctx.fillRect(0, waterY, W, 50);
+
+      requestAnimationFrame(loop);
+    }
+
+    // First initial firework burst
+    setTimeout(() => {
+      launchRocket(W * 0.5, H * 0.3, 1);
+    }, 400);
+
+    requestAnimationFrame(loop);
+  })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,636 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+  <meta name="theme-color" content="#030611">
+  <title>Cực Quang & Mưa Sao Băng — Aurora & Meteor Shower</title>
+  <style>
+    :root {
+      --bg: #030611;
+      --aurora1: #10b981;
+      --aurora2: #06b6d4;
+      --aurora3: #8b5cf6;
+      --aurora4: #ec4899;
+      --gold: #fde047;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    * { box-sizing: border-box; user-select: none; -webkit-user-select: none; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: var(--bg);
+      color: #fff;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      touch-action: none;
+    }
+    canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    .top-bar {
+      position: absolute;
+      top: calc(14px + var(--safe-top));
+      left: 16px;
+      right: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 20;
+      pointer-events: none;
+    }
+    .top-bar > * { pointer-events: auto; }
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 8px 14px;
+      border-radius: 99px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #cbd5e1;
+      font-size: 13px;
+      font-weight: 800;
+      text-decoration: none;
+      backdrop-filter: blur(8px);
+      transition: background 0.15s, color 0.15s;
+    }
+    .back-btn:hover { background: rgba(255, 255, 255, 0.18); color: #fff; }
+    .icon-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #fff;
+      display: grid;
+      place-items: center;
+      font-size: 15px;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+      transition: transform 0.15s, background 0.15s;
+    }
+    .icon-btn:hover { transform: scale(1.08); background: rgba(255, 255, 255, 0.18); }
+
+    /* Center Quote */
+    .title-banner {
+      position: absolute;
+      top: calc(70px + var(--safe-top));
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 15;
+      text-align: center;
+      pointer-events: none;
+      width: min(90vw, 520px);
+    }
+    .title-banner h1 {
+      margin: 0;
+      font-size: clamp(24px, 5.5vw, 38px);
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      background: linear-gradient(135deg, #a7f3d0, #67e8f9 45%, #c084fc 80%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 0 20px rgba(16, 185, 129, 0.45));
+    }
+    .title-banner p {
+      margin: 6px 0 0;
+      font-size: 12px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.6);
+      font-weight: 700;
+    }
+
+    /* Floating Wish Toast */
+    .wish-toast {
+      position: absolute;
+      left: 50%;
+      bottom: calc(90px + var(--safe-bottom));
+      transform: translateX(-50%) translateY(10px);
+      opacity: 0;
+      pointer-events: none;
+      z-index: 25;
+      padding: 10px 20px;
+      border-radius: 99px;
+      background: rgba(16, 185, 129, 0.2);
+      border: 1px solid rgba(52, 211, 153, 0.4);
+      color: #a7f3d0;
+      font-weight: 800;
+      font-size: 13px;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 0 25px rgba(16, 185, 129, 0.35);
+      transition: opacity 0.3s, transform 0.3s;
+      white-space: nowrap;
+    }
+    .wish-toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* Bottom Action Bar */
+    .bottom-bar {
+      position: absolute;
+      bottom: calc(20px + var(--safe-bottom));
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .action-btn {
+      padding: 11px 22px;
+      border-radius: 99px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: rgba(15, 23, 42, 0.8);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 900;
+      cursor: pointer;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(16, 185, 129, 0.2);
+      transition: transform 0.15s, background 0.15s;
+    }
+    .action-btn:hover {
+      transform: translateY(-2px);
+      background: rgba(16, 185, 129, 0.3);
+    }
+
+    /* Modal */
+    .modal-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: rgba(3, 6, 17, 0.8);
+      backdrop-filter: blur(12px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s;
+    }
+    .modal-overlay.show { opacity: 1; pointer-events: auto; }
+    .modal-box {
+      width: min(400px, 95%);
+      background: linear-gradient(160deg, #0e1e2d, #070d19);
+      border: 1px solid rgba(52, 211, 153, 0.3);
+      border-radius: 26px;
+      padding: 30px 24px;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), 0 0 50px rgba(16, 185, 129, 0.15);
+    }
+    .modal-box h2 {
+      margin: 0 0 8px;
+      font-size: 24px;
+      font-weight: 950;
+      background: linear-gradient(135deg, #a7f3d0, #38bdf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .modal-box p {
+      color: #94a3b8;
+      font-size: 13px;
+      margin: 0 0 20px;
+      line-height: 1.55;
+    }
+    .modal-input {
+      width: 100%;
+      padding: 13px 16px;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: rgba(255, 255, 255, 0.06);
+      color: #fff;
+      font-size: 15px;
+      font-weight: 700;
+      text-align: center;
+      outline: none;
+      margin-bottom: 20px;
+    }
+    .modal-input:focus { border-color: #34d399; }
+    .submit-wish-btn {
+      width: 100%;
+      padding: 14px;
+      border-radius: 14px;
+      border: 0;
+      background: linear-gradient(135deg, #10b981, #06b6d4);
+      color: #030814;
+      font-weight: 950;
+      font-size: 15px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="auroraCanvas"></canvas>
+
+  <header class="top-bar">
+    <a class="back-btn" href="./">
+      <span aria-hidden="true">←</span> Sảnh game
+    </a>
+    <div style="display:flex; gap:8px;">
+      <button id="soundBtn" class="icon-btn" title="Âm thanh cực quang">🔊</button>
+    </div>
+  </header>
+
+  <div class="title-banner">
+    <h1>Cực Quang & Mưa Sao Băng</h1>
+    <p>Vuốt để tạo dải lụa sáng · Chạm để gọi sao băng</p>
+  </div>
+
+  <div id="wishToast" class="wish-toast">✨ Điều ước của bạn đã hóa thành vì sao!</div>
+
+  <div class="bottom-bar">
+    <button id="makeWishBtn" class="action-btn">
+      🌠 Ước Một Điều Ước
+    </button>
+  </div>
+
+  <!-- Wish Modal -->
+  <div id="wishModal" class="modal-overlay">
+    <div class="modal-box">
+      <h2>🌠 Điều Ước Dưới Bầu Trời Sao</h2>
+      <p>Hãy gửi gắm ước mơ hoặc lời chúc tốt đẹp nhất. Khi ngôi sao băng bay qua, mong ước của bạn sẽ thành hiện thực.</p>
+      <input type="text" id="wishInput" class="modal-input" maxlength="50" placeholder="Viết điều ước của bạn vào đây..." value="Bình an, hạnh phúc và vạn sự như ý ✨">
+      <button id="submitWishBtn" class="submit-wish-btn">PHÓNG SAO BĂNG ƯỚC NGUYỆN</button>
+    </div>
+  </div>
+
+  <script>
+  (() => {
+    'use strict';
+
+    // --- Relaxing Ambient Synth Audio ---
+    class AuroraSynth {
+      constructor() {
+        this.ctx = null;
+        this.muted = false;
+        this.padOscs = [];
+        try { this.muted = localStorage.getItem('auroraMuted') === '1'; } catch (_) {}
+      }
+
+      init() {
+        if (!this.ctx) {
+          const AC = window.AudioContext || window.webkitAudioContext;
+          if (AC) {
+            this.ctx = new AC();
+            this.startAmbientDrone();
+          }
+        }
+        if (this.ctx && this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      }
+
+      startAmbientDrone() {
+        if (this.muted || !this.ctx) return;
+        const chords = [130.81, 164.81, 196.00, 261.63]; // C-E-G-C major ambient pad
+        chords.forEach((freq, idx) => {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+
+          // Gentle LFO filter modulation
+          const lfo = this.ctx.createOscillator();
+          lfo.frequency.setValueAtTime(0.1 + idx * 0.05, this.ctx.currentTime);
+          const lfoGain = this.ctx.createGain();
+          lfoGain.gain.setValueAtTime(0.015, this.ctx.currentTime);
+          lfo.connect(lfoGain.gain);
+
+          gain.gain.setValueAtTime(0.015, this.ctx.currentTime);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start();
+          lfo.start();
+          this.padOscs.push({ osc, gain });
+        });
+      }
+
+      playMeteorChime() {
+        if (this.muted) return;
+        this.init();
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        const freqs = [880, 1174.66, 1318.51, 1760];
+        const f = freqs[Math.floor(Math.random() * freqs.length)];
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(f, now);
+        osc.frequency.exponentialRampToValueAtTime(f * 1.5, now + 0.35);
+        gain.gain.setValueAtTime(0.08, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.52);
+      }
+
+      toggleMute() {
+        this.muted = !this.muted;
+        try { localStorage.setItem('auroraMuted', this.muted ? '1' : '0'); } catch (_) {}
+        if (this.muted && this.ctx) {
+          this.ctx.suspend();
+        } else if (!this.muted && this.ctx) {
+          this.ctx.resume();
+        }
+        return this.muted;
+      }
+    }
+
+    const sound = new AuroraSynth();
+
+    // --- Canvas Setup ---
+    const canvas = document.getElementById('auroraCanvas');
+    const ctx = canvas.getContext('2d');
+    const soundBtn = document.getElementById('soundBtn');
+    const makeWishBtn = document.getElementById('makeWishBtn');
+    const wishModal = document.getElementById('wishModal');
+    const wishInput = document.getElementById('wishInput');
+    const submitWishBtn = document.getElementById('submitWishBtn');
+    const wishToast = document.getElementById('wishToast');
+
+    let W = window.innerWidth;
+    let H = window.innerHeight;
+    let dpr = window.devicePixelRatio || 1;
+
+    let stars = [];
+    let meteors = [];
+    let stardust = [];
+    let interactivePoints = [];
+
+    function resize() {
+      W = window.innerWidth;
+      H = window.innerHeight;
+      dpr = window.devicePixelRatio || 1;
+      canvas.width = W * dpr;
+      canvas.height = H * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      // Starfield
+      stars = Array.from({ length: 140 }, () => ({
+        x: Math.random() * W,
+        y: Math.random() * (H * 0.75),
+        r: 0.5 + Math.random() * 1.8,
+        alpha: 0.2 + Math.random() * 0.8,
+        spd: 0.8 + Math.random() * 2
+      }));
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    // --- Meteor (Sao Băng) Spawner ---
+    function spawnMeteor(startX = null, startY = null, customWish = null) {
+      sound.playMeteorChime();
+      const x = startX !== null ? startX : Math.random() * (W * 0.8);
+      const y = startY !== null ? startY : Math.random() * (H * 0.3);
+      const angle = Math.PI / 4 + (Math.random() - 0.5) * 0.3;
+      const spd = 650 + Math.random() * 400;
+
+      meteors.push({
+        x,
+        y,
+        vx: Math.cos(angle) * spd,
+        vy: Math.sin(angle) * spd,
+        length: 80 + Math.random() * 90,
+        life: 0.8 + Math.random() * 0.4,
+        maxLife: 1.2,
+        color: '#67e8f9',
+        wish: customWish
+      });
+    }
+
+    // --- User Interaction ---
+    canvas.addEventListener('pointerdown', (e) => {
+      sound.init();
+      const rect = canvas.getBoundingClientRect();
+      const px = e.clientX - rect.left;
+      const py = e.clientY - rect.top;
+      spawnMeteor(px, py);
+    });
+
+    window.addEventListener('pointermove', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const px = e.clientX - rect.left;
+      const py = e.clientY - rect.top;
+
+      interactivePoints.push({ x: px, y: py, life: 1.0 });
+      if (interactivePoints.length > 25) interactivePoints.shift();
+
+      // Spawn subtle stardust trail
+      if (Math.random() < 0.3) {
+        stardust.push({
+          x: px,
+          y: py,
+          vx: (Math.random() - 0.5) * 20,
+          vy: (Math.random() - 0.5) * 20,
+          life: 0.6 + Math.random() * 0.4,
+          maxLife: 1.0,
+          r: 1 + Math.random() * 2
+        });
+      }
+    });
+
+    makeWishBtn.addEventListener('click', () => {
+      sound.init();
+      wishModal.classList.add('show');
+      wishInput.focus();
+    });
+
+    submitWishBtn.addEventListener('click', () => {
+      const val = wishInput.value.trim() || 'Ước nguyện bình an ✨';
+      wishModal.classList.remove('show');
+
+      // Launch 3 meteor wishes!
+      for (let i = 0; i < 3; i++) {
+        setTimeout(() => {
+          spawnMeteor(W * 0.2 + i * (W * 0.25), H * 0.15 + i * 40, val);
+        }, i * 260);
+      }
+
+      wishToast.textContent = `🌠 "${val}" đã được gửi tới vũ trụ!`;
+      wishToast.classList.add('show');
+      setTimeout(() => wishToast.classList.remove('show'), 3800);
+    });
+
+    wishModal.addEventListener('click', (e) => {
+      if (e.target === wishModal) wishModal.classList.remove('show');
+    });
+
+    soundBtn.addEventListener('click', () => {
+      sound.init();
+      const isMuted = sound.toggleMute();
+      soundBtn.textContent = isMuted ? '🔇' : '🔊';
+    });
+    if (sound.muted) soundBtn.textContent = '🔇';
+
+    // Auto Meteor Spawning Timer
+    let autoMeteorTimer = 2.5;
+
+    // --- Main Loop ---
+    let lastTime = performance.now();
+
+    function render(now) {
+      const dt = Math.min(0.04, (now - lastTime) / 1000);
+      lastTime = now;
+
+      autoMeteorTimer -= dt;
+      if (autoMeteorTimer <= 0) {
+        spawnMeteor();
+        autoMeteorTimer = 3.0 + Math.random() * 4.5;
+      }
+
+      // 1. Sky Gradient Background
+      const skyGrad = ctx.createLinearGradient(0, 0, 0, H);
+      skyGrad.addColorStop(0, '#020512');
+      skyGrad.addColorStop(0.5, '#051026');
+      skyGrad.addColorStop(1, '#071836');
+      ctx.fillStyle = skyGrad;
+      ctx.fillRect(0, 0, W, H);
+
+      // 2. Stars
+      for (let i = 0; i < stars.length; i++) {
+        const s = stars[i];
+        const alpha = s.alpha * (0.6 + 0.4 * Math.sin(now * 0.0015 * s.spd + i));
+        ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // 3. Aurora Wave Curtains (Mathematical fluid ribbons)
+      ctx.save();
+      ctx.globalCompositeOperation = 'screen';
+
+      const layers = [
+        { color: 'rgba(16, 185, 129, 0.28)', yOff: 0.28, freq: 0.0018, amp: 55, speed: 0.0008 },
+        { color: 'rgba(6, 182, 212, 0.24)', yOff: 0.34, freq: 0.0022, amp: 70, speed: 0.0011 },
+        { color: 'rgba(139, 92, 246, 0.22)', yOff: 0.40, freq: 0.0015, amp: 85, speed: 0.0007 },
+        { color: 'rgba(236, 72, 153, 0.16)', yOff: 0.46, freq: 0.0025, amp: 60, speed: 0.0014 }
+      ];
+
+      layers.forEach((layer) => {
+        ctx.beginPath();
+        const baseH = H * layer.yOff;
+        ctx.moveTo(0, baseH);
+
+        for (let x = 0; x <= W; x += 15) {
+          const wave1 = Math.sin(x * layer.freq + now * layer.speed) * layer.amp;
+          const wave2 = Math.cos(x * layer.freq * 0.5 - now * layer.speed * 0.7) * (layer.amp * 0.5);
+          const y = baseH + wave1 + wave2;
+          ctx.lineTo(x, y);
+        }
+
+        ctx.lineTo(W, H * 0.8);
+        ctx.lineTo(0, H * 0.8);
+        ctx.closePath();
+
+        const grad = ctx.createLinearGradient(0, baseH - layer.amp, 0, H * 0.75);
+        grad.addColorStop(0, 'transparent');
+        grad.addColorStop(0.3, layer.color);
+        grad.addColorStop(1, 'transparent');
+
+        ctx.fillStyle = grad;
+        ctx.filter = 'blur(12px)';
+        ctx.fill();
+        ctx.filter = 'none';
+      });
+      ctx.restore();
+
+      // 4. Interactive Stardust Trails
+      for (let i = stardust.length - 1; i >= 0; i--) {
+        const sd = stardust[i];
+        sd.life -= dt;
+        if (sd.life <= 0) { stardust.splice(i, 1); continue; }
+        sd.x += sd.vx * dt;
+        sd.y += sd.vy * dt;
+
+        ctx.save();
+        ctx.fillStyle = '#67e8f9';
+        ctx.shadowColor = '#67e8f9';
+        ctx.shadowBlur = 8;
+        ctx.globalAlpha = sd.life / sd.maxLife;
+        ctx.beginPath();
+        ctx.arc(sd.x, sd.y, sd.r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      // 5. Meteors (Sao Băng)
+      for (let i = meteors.length - 1; i >= 0; i--) {
+        const m = meteors[i];
+        m.life -= dt;
+        if (m.life <= 0) { meteors.splice(i, 1); continue; }
+
+        m.x += m.vx * dt;
+        m.y += m.vy * dt;
+
+        const tailX = m.x - (m.vx / 800) * m.length;
+        const tailY = m.y - (m.vy / 800) * m.length;
+
+        ctx.save();
+        const mGrad = ctx.createLinearGradient(tailX, tailY, m.x, m.y);
+        mGrad.addColorStop(0, 'transparent');
+        mGrad.addColorStop(0.7, 'rgba(103, 232, 249, 0.4)');
+        mGrad.addColorStop(1, '#ffffff');
+
+        ctx.strokeStyle = mGrad;
+        ctx.lineWidth = 2.5;
+        ctx.shadowColor = '#67e8f9';
+        ctx.shadowBlur = 10;
+        ctx.beginPath();
+        ctx.moveTo(tailX, tailY);
+        ctx.lineTo(m.x, m.y);
+        ctx.stroke();
+
+        // Meteor Head Spark
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(m.x, m.y, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Floating wish label if custom
+        if (m.wish) {
+          ctx.font = 'bold 13px Inter, sans-serif';
+          ctx.fillStyle = '#fde047';
+          ctx.shadowColor = 'rgba(0,0,0,0.8)';
+          ctx.shadowBlur = 6;
+          ctx.fillText(`✨ ${m.wish}`, m.x + 10, m.y - 10);
+        }
+        ctx.restore();
+      }
+
+      // 6. Mountain Silhouette at Bottom
+      ctx.save();
+      ctx.fillStyle = '#02050f';
+      ctx.beginPath();
+      ctx.moveTo(0, H);
+      ctx.lineTo(0, H - 90);
+      ctx.lineTo(W * 0.2, H - 130);
+      ctx.lineTo(W * 0.45, H - 75);
+      ctx.lineTo(W * 0.75, H - 140);
+      ctx.lineTo(W, H - 85);
+      ctx.lineTo(W, H);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+
+      requestAnimationFrame(render);
+    }
+
+    requestAnimationFrame(render);
+  })();
+  </script>
+</body>
+</html>
