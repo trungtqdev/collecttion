@@ -1,0 +1,496 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+  <meta name="theme-color" content="#050716">
+  <title>Bản Đồ Sao & Cung Hoàng Đạo — Star Constellations</title>
+  <style>
+    :root {
+      --bg: #050716;
+      --cyan: #4deeff;
+      --gold: #ffd257;
+      --purple: #c084fc;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    * { box-sizing: border-box; user-select: none; -webkit-user-select: none; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: var(--bg);
+      color: #fff;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      touch-action: none;
+    }
+    canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    .top-bar {
+      position: absolute;
+      top: calc(14px + var(--safe-top));
+      left: 16px;
+      right: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 20;
+      pointer-events: none;
+    }
+    .top-bar > * { pointer-events: auto; }
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 8px 14px;
+      border-radius: 99px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #cbd5e1;
+      font-size: 13px;
+      font-weight: 800;
+      text-decoration: none;
+      backdrop-filter: blur(8px);
+      transition: background 0.15s, color 0.15s;
+    }
+    .back-btn:hover { background: rgba(255, 255, 255, 0.18); color: #fff; }
+    .icon-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #fff;
+      display: grid;
+      place-items: center;
+      font-size: 15px;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+      transition: transform 0.15s;
+    }
+    .icon-btn:hover { transform: scale(1.08); }
+
+    /* Center Constellation Title */
+    .title-banner {
+      position: absolute;
+      top: calc(70px + var(--safe-top));
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 15;
+      text-align: center;
+      pointer-events: none;
+      width: min(90vw, 540px);
+    }
+    .constellation-title {
+      margin: 0;
+      font-size: clamp(24px, 5.5vw, 36px);
+      font-weight: 950;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, #fff, var(--cyan) 50%, var(--purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 0 20px rgba(77, 238, 255, 0.5));
+    }
+    .constellation-sub {
+      margin-top: 6px;
+      font-size: 12px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.65);
+      font-weight: 700;
+    }
+
+    /* Bottom Zodiac Picker Scroll */
+    .bottom-picker {
+      position: absolute;
+      bottom: calc(18px + var(--safe-bottom));
+      left: 16px;
+      right: 16px;
+      z-index: 20;
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      padding: 8px 12px;
+      border-radius: 99px;
+      background: rgba(14, 20, 42, 0.75);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(12px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+    }
+    .bottom-picker::-webkit-scrollbar { display: none; }
+    .zodiac-chip {
+      flex-shrink: 0;
+      padding: 7px 14px;
+      border-radius: 99px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #cbd5e1;
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+    .zodiac-chip:hover, .zodiac-chip.active {
+      background: rgba(77, 238, 255, 0.2);
+      border-color: var(--cyan);
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="skyCanvas"></canvas>
+
+  <header class="top-bar">
+    <a class="back-btn" href="./">
+      <span aria-hidden="true">←</span> Sảnh game
+    </a>
+    <div style="display:flex; gap:8px;">
+      <button id="soundBtn" class="icon-btn" title="Âm thanh các vì sao">🔊</button>
+      <button id="clearBtn" class="icon-btn" title="Xóa đường vẽ">✨</button>
+    </div>
+  </header>
+
+  <div class="title-banner">
+    <h1 class="constellation-title" id="constellationTitle">Chòm Sao Tình Yêu 💖</h1>
+    <div class="constellation-sub">Kéo để nối sao · Chọn cung hoàng đạo bên dưới</div>
+  </div>
+
+  <nav class="bottom-picker" id="zodiacPicker" aria-label="12 Cung hoàng đạo">
+    <!-- Populated by JS -->
+  </nav>
+
+  <script>
+  (() => {
+    'use strict';
+
+    // --- Celestial Glockenspiel / Harp Synth ---
+    class CelestialSynth {
+      constructor() {
+        this.ctx = null;
+        this.muted = false;
+        try { this.muted = localStorage.getItem('starMuted') === '1'; } catch (_) {}
+      }
+
+      init() {
+        if (!this.ctx) {
+          const AC = window.AudioContext || window.webkitAudioContext;
+          if (AC) this.ctx = new AC();
+        }
+        if (this.ctx && this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      }
+
+      playStarNote(freqIndex = 0) {
+        if (this.muted) return;
+        this.init();
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        const scale = [523.25, 587.33, 659.25, 783.99, 880.00, 1046.50, 1174.66, 1318.51]; // C major pentatonic
+        const freq = scale[freqIndex % scale.length];
+
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now);
+
+        gain.gain.setValueAtTime(0.12, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.65);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.68);
+      }
+
+      toggleMute() {
+        this.muted = !this.muted;
+        try { localStorage.setItem('starMuted', this.muted ? '1' : '0'); } catch (_) {}
+        return this.muted;
+      }
+    }
+
+    const sound = new CelestialSynth();
+
+    // --- Preset Zodiac Constellations ---
+    const PRESETS = [
+      {
+        name: 'Chòm Sao Tình Yêu 💖',
+        sub: 'Trái tim rực rỡ giữa dải ngân hà',
+        points: [
+          { x: 0.5, y: 0.5 }, { x: 0.42, y: 0.42 }, { x: 0.38, y: 0.48 },
+          { x: 0.5, y: 0.62 }, { x: 0.62, y: 0.48 }, { x: 0.58, y: 0.42 }, { x: 0.5, y: 0.5 }
+        ]
+      },
+      {
+        name: 'Bạch Dương ♈',
+        sub: 'Aries — Ngọn lửa dũng cảm',
+        points: [{ x: 0.35, y: 0.52 }, { x: 0.45, y: 0.48 }, { x: 0.58, y: 0.44 }, { x: 0.65, y: 0.47 }]
+      },
+      {
+        name: 'Kim Ngưu ♉',
+        sub: 'Taurus — Bền bỉ & kiên định',
+        points: [{ x: 0.38, y: 0.42 }, { x: 0.48, y: 0.46 }, { x: 0.52, y: 0.55 }, { x: 0.44, y: 0.58 }, { x: 0.48, y: 0.46 }, { x: 0.62, y: 0.42 }]
+      },
+      {
+        name: 'Song Tử ♊',
+        sub: 'Gemini — Cặp song sinh thông tuệ',
+        points: [{ x: 0.4, y: 0.38 }, { x: 0.42, y: 0.56 }, { x: 0.58, y: 0.56 }, { x: 0.6, y: 0.38 }, { x: 0.5, y: 0.46 }, { x: 0.4, y: 0.38 }]
+      },
+      {
+        name: 'Cự Giải ♋',
+        sub: 'Cancer — Ấm áp & chân thành',
+        points: [{ x: 0.5, y: 0.42 }, { x: 0.45, y: 0.52 }, { x: 0.55, y: 0.54 }, { x: 0.45, y: 0.52 }, { x: 0.48, y: 0.62 }]
+      },
+      {
+        name: 'Sư Tử ♌',
+        sub: 'Leo — Kiêu hãnh & rạng ngời',
+        points: [{ x: 0.36, y: 0.54 }, { x: 0.44, y: 0.56 }, { x: 0.58, y: 0.52 }, { x: 0.56, y: 0.42 }, { x: 0.48, y: 0.38 }, { x: 0.44, y: 0.44 }, { x: 0.44, y: 0.56 }]
+      },
+      {
+        name: 'Xử Nữ ♍',
+        sub: 'Virgo — Tinh tế & thuần khiết',
+        points: [{ x: 0.38, y: 0.42 }, { x: 0.46, y: 0.45 }, { x: 0.54, y: 0.44 }, { x: 0.62, y: 0.52 }, { x: 0.52, y: 0.60 }, { x: 0.46, y: 0.45 }]
+      },
+      {
+        name: 'Thiên Bình ♎',
+        sub: 'Libra — Cân bằng & yêu thương',
+        points: [{ x: 0.38, y: 0.56 }, { x: 0.5, y: 0.42 }, { x: 0.62, y: 0.56 }, { x: 0.5, y: 0.42 }, { x: 0.5, y: 0.58 }]
+      },
+      {
+        name: 'Bọ Cạp ♏',
+        sub: 'Scorpio — Quyến rũ & bí ẩn',
+        points: [{ x: 0.38, y: 0.42 }, { x: 0.44, y: 0.46 }, { x: 0.50, y: 0.52 }, { x: 0.54, y: 0.60 }, { x: 0.60, y: 0.58 }, { x: 0.62, y: 0.50 }]
+      },
+      {
+        name: 'Nhân Mã ♐',
+        sub: 'Sagittarius — Tự do phóng khoáng',
+        points: [{ x: 0.42, y: 0.60 }, { x: 0.48, y: 0.50 }, { x: 0.58, y: 0.42 }, { x: 0.48, y: 0.50 }, { x: 0.54, y: 0.58 }, { x: 0.62, y: 0.52 }]
+      },
+      {
+        name: 'Ma Kết ♑',
+        sub: 'Capricorn — Vững chãi & kiên định',
+        points: [{ x: 0.38, y: 0.44 }, { x: 0.46, y: 0.58 }, { x: 0.56, y: 0.54 }, { x: 0.62, y: 0.44 }, { x: 0.50, y: 0.42 }, { x: 0.38, y: 0.44 }]
+      },
+      {
+        name: 'Bảo Bình ♒',
+        sub: 'Aquarius — Sáng tạo & độc đáo',
+        points: [{ x: 0.38, y: 0.44 }, { x: 0.46, y: 0.48 }, { x: 0.54, y: 0.44 }, { x: 0.62, y: 0.48 }, { x: 0.54, y: 0.56 }, { x: 0.46, y: 0.60 }]
+      },
+      {
+        name: 'Song Ngư ♓',
+        sub: 'Pisces — Mộng mơ & giàu cảm xúc',
+        points: [{ x: 0.36, y: 0.42 }, { x: 0.42, y: 0.48 }, { x: 0.40, y: 0.56 }, { x: 0.42, y: 0.48 }, { x: 0.56, y: 0.48 }, { x: 0.60, y: 0.42 }, { x: 0.62, y: 0.56 }]
+      }
+    ];
+
+    const canvas = document.getElementById('skyCanvas');
+    const ctx = canvas.getContext('2d');
+    const titleEl = document.getElementById('constellationTitle');
+    const subEl = document.querySelector('.constellation-sub');
+    const picker = document.getElementById('zodiacPicker');
+    const soundBtn = document.getElementById('soundBtn');
+    const clearBtn = document.getElementById('clearBtn');
+
+    let W = window.innerWidth;
+    let H = window.innerHeight;
+    let dpr = window.devicePixelRatio || 1;
+
+    let backgroundStars = [];
+    let activeConstellation = [];
+    let customLines = [];
+    let isDrawing = false;
+    let traceProgress = 1;
+
+    function resize() {
+      W = window.innerWidth;
+      H = window.innerHeight;
+      dpr = window.devicePixelRatio || 1;
+      canvas.width = W * dpr;
+      canvas.height = H * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      // Starfield
+      backgroundStars = Array.from({ length: 110 }, () => ({
+        x: Math.random() * W,
+        y: Math.random() * H,
+        r: 0.6 + Math.random() * 1.6,
+        alpha: 0.2 + Math.random() * 0.8,
+        twinkle: 1 + Math.random() * 2
+      }));
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    // Populate Zodiac Chips
+    PRESETS.forEach((preset, idx) => {
+      const chip = document.createElement('button');
+      chip.className = `zodiac-chip ${idx === 0 ? 'active' : ''}`;
+      chip.textContent = preset.name;
+      chip.addEventListener('click', () => {
+        sound.init();
+        document.querySelectorAll('.zodiac-chip').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        loadPreset(preset);
+      });
+      picker.appendChild(chip);
+    });
+
+    function loadPreset(preset) {
+      titleEl.textContent = preset.name;
+      subEl.textContent = preset.sub;
+      activeConstellation = preset.points.map(pt => ({
+        x: pt.x * W,
+        y: pt.y * H
+      }));
+      customLines = [];
+      traceProgress = 0;
+      sound.playStarNote(0);
+    }
+
+    // --- Interactive Drawing ---
+    canvas.addEventListener('pointerdown', (e) => {
+      sound.init();
+      isDrawing = true;
+      const rect = canvas.getBoundingClientRect();
+      const pt = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+      customLines.push(pt);
+      sound.playStarNote(customLines.length);
+    });
+
+    window.addEventListener('pointermove', (e) => {
+      if (!isDrawing) return;
+      const rect = canvas.getBoundingClientRect();
+      const pt = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+      const last = customLines[customLines.length - 1];
+      if (last && Math.hypot(pt.x - last.x, pt.y - last.y) > 40) {
+        customLines.push(pt);
+        sound.playStarNote(customLines.length);
+      }
+    });
+
+    window.addEventListener('pointerup', () => {
+      isDrawing = false;
+    });
+
+    clearBtn.addEventListener('click', () => {
+      customLines = [];
+      sound.playStarNote(3);
+    });
+
+    soundBtn.addEventListener('click', () => {
+      const isMuted = sound.toggleMute();
+      soundBtn.textContent = isMuted ? '🔇' : '🔊';
+    });
+    if (sound.muted) soundBtn.textContent = '🔇';
+
+    loadPreset(PRESETS[0]);
+
+    // --- Render Loop ---
+    let lastTime = performance.now();
+
+    function render(now) {
+      const dt = Math.min(0.04, (now - lastTime) / 1000);
+      lastTime = now;
+
+      // Animate Constellation Tracing
+      if (traceProgress < 1) {
+        traceProgress = Math.min(1, traceProgress + dt * 0.9);
+      }
+
+      ctx.clearRect(0, 0, W, H);
+
+      // 1. Nebula Clouds Background
+      const nebGrad = ctx.createRadialGradient(W * 0.5, H * 0.5, 60, W * 0.5, H * 0.5, Math.max(W, H) * 0.7);
+      nebGrad.addColorStop(0, '#101638');
+      nebGrad.addColorStop(0.5, '#070a1e');
+      nebGrad.addColorStop(1, '#030510');
+      ctx.fillStyle = nebGrad;
+      ctx.fillRect(0, 0, W, H);
+
+      // 2. Stars
+      for (let i = 0; i < backgroundStars.length; i++) {
+        const s = backgroundStars[i];
+        const alpha = s.alpha * (0.6 + 0.4 * Math.sin(now * 0.002 * s.twinkle + i));
+        ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // 3. Draw Active Preset Constellation
+      if (activeConstellation.length >= 2) {
+        ctx.save();
+        ctx.strokeStyle = 'rgba(77, 238, 255, 0.7)';
+        ctx.shadowColor = '#4deeff';
+        ctx.shadowBlur = 14;
+        ctx.lineWidth = 2.5;
+
+        const maxPoints = Math.floor(activeConstellation.length * traceProgress);
+
+        ctx.beginPath();
+        for (let i = 0; i < maxPoints; i++) {
+          const pt = activeConstellation[i];
+          if (i === 0) ctx.moveTo(pt.x, pt.y);
+          else ctx.lineTo(pt.x, pt.y);
+        }
+        ctx.stroke();
+
+        // Draw Stars on Constellation Vertices
+        for (let i = 0; i < maxPoints; i++) {
+          const pt = activeConstellation[i];
+          ctx.fillStyle = '#ffffff';
+          ctx.shadowColor = '#ffd257';
+          ctx.shadowBlur = 16;
+          ctx.beginPath();
+          ctx.arc(pt.x, pt.y, 4, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+
+      // 4. Draw Custom Drawn Lines
+      if (customLines.length >= 2) {
+        ctx.save();
+        ctx.strokeStyle = '#ffd257';
+        ctx.shadowColor = '#ffd257';
+        ctx.shadowBlur = 12;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        for (let i = 0; i < customLines.length; i++) {
+          const pt = customLines[i];
+          if (i === 0) ctx.moveTo(pt.x, pt.y);
+          else ctx.lineTo(pt.x, pt.y);
+        }
+        ctx.stroke();
+
+        for (let i = 0; i < customLines.length; i++) {
+          const pt = customLines[i];
+          ctx.fillStyle = '#fff';
+          ctx.beginPath();
+          ctx.arc(pt.x, pt.y, 3, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+
+      requestAnimationFrame(render);
+    }
+
+    requestAnimationFrame(render);
+  })();
+  </script>
+</body>
+</html>

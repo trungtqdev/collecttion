@@ -1,0 +1,424 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+  <meta name="theme-color" content="#030708">
+  <title>Mưa Ký Tự Số & Mật Mã Trái Tim — Cyber Matrix Love</title>
+  <style>
+    :root {
+      --bg: #030708;
+      --accent: #00ff88;
+      --glow: rgba(0, 255, 136, 0.6);
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    * { box-sizing: border-box; user-select: none; -webkit-user-select: none; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: var(--bg);
+      color: #fff;
+      font-family: "Courier New", Courier, monospace, system-ui;
+      touch-action: none;
+    }
+    canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    /* Top Bar */
+    .top-bar {
+      position: absolute;
+      top: calc(14px + var(--safe-top));
+      left: 16px;
+      right: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 20;
+      pointer-events: none;
+    }
+    .top-bar > * { pointer-events: auto; }
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 8px 14px;
+      border-radius: 99px;
+      background: rgba(0, 255, 136, 0.08);
+      border: 1px solid var(--glow);
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 800;
+      text-decoration: none;
+      backdrop-filter: blur(8px);
+      transition: background 0.15s, transform 0.15s;
+    }
+    .back-btn:hover { background: rgba(0, 255, 136, 0.2); transform: scale(1.03); }
+    .top-actions {
+      display: flex;
+      gap: 8px;
+    }
+    .icon-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: rgba(0, 255, 136, 0.08);
+      border: 1px solid var(--glow);
+      color: var(--accent);
+      display: grid;
+      place-items: center;
+      font-size: 15px;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+      transition: transform 0.15s, background 0.15s;
+    }
+    .icon-btn:hover { transform: scale(1.08); background: rgba(0, 255, 136, 0.2); }
+
+    /* Center Overlay Messages */
+    .center-hud {
+      position: absolute;
+      top: calc(75px + var(--safe-top));
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 15;
+      text-align: center;
+      pointer-events: none;
+      width: min(90vw, 540px);
+    }
+    .hud-title {
+      margin: 0;
+      font-size: clamp(22px, 5.5vw, 36px);
+      font-weight: 950;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: #fff;
+      text-shadow: 0 0 20px var(--accent);
+    }
+    .hud-sub {
+      margin-top: 6px;
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.7);
+      letter-spacing: 0.15em;
+    }
+
+    /* Bottom Control Bar */
+    .bottom-bar {
+      position: absolute;
+      bottom: calc(20px + var(--safe-bottom));
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 14px;
+      border-radius: 99px;
+      background: rgba(4, 12, 16, 0.85);
+      border: 1px solid var(--glow);
+      backdrop-filter: blur(12px);
+      box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
+    }
+    .action-btn {
+      padding: 9px 18px;
+      border-radius: 99px;
+      border: 1px solid var(--glow);
+      background: rgba(0, 255, 136, 0.12);
+      color: var(--accent);
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.15s, color 0.15s;
+    }
+    .action-btn:hover {
+      background: var(--accent);
+      color: #030708;
+      transform: translateY(-2px);
+      box-shadow: 0 0 20px var(--accent);
+    }
+  </style>
+</head>
+<body>
+  <canvas id="matrixCanvas"></canvas>
+
+  <header class="top-bar">
+    <a class="back-btn" href="./">
+      <span aria-hidden="true">←</span> Sảnh game
+    </a>
+    <div class="top-actions">
+      <button id="soundBtn" class="icon-btn" title="Âm thanh kỹ thuật số">🔊</button>
+      <button id="colorBtn" class="icon-btn" title="Đổi bảng màu">🎨</button>
+    </div>
+  </header>
+
+  <div class="center-hud">
+    <h1 class="hud-title" id="hudTitle">CYBER MATRIX</h1>
+    <div class="hud-sub" id="hudSub">Chạm để giải mã dữ liệu tình yêu</div>
+  </div>
+
+  <nav class="bottom-bar">
+    <button id="heartModeBtn" class="action-btn">
+      💖 MẬT MÃ TRÁI TIM
+    </button>
+    <button id="customMsgBtn" class="action-btn">
+      ✍️ LỜI NHẮN
+    </button>
+  </nav>
+
+  <script>
+  (() => {
+    'use strict';
+
+    // --- Web Audio Synthesizer ---
+    class CyberSynth {
+      constructor() {
+        this.ctx = null;
+        this.muted = false;
+        try { this.muted = localStorage.getItem('matrixMuted') === '1'; } catch (_) {}
+      }
+
+      init() {
+        if (!this.ctx) {
+          const AC = window.AudioContext || window.webkitAudioContext;
+          if (AC) this.ctx = new AC();
+        }
+        if (this.ctx && this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      }
+
+      playBlip() {
+        if (this.muted) return;
+        this.init();
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(800 + Math.random() * 800, now);
+        osc.frequency.exponentialRampToValueAtTime(300, now + 0.05);
+        gain.gain.setValueAtTime(0.04, now);
+        gain.gain.linearRampToValueAtTime(0.001, now + 0.05);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.06);
+      }
+
+      playHeartDecode() {
+        if (this.muted) return;
+        this.init();
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        const chords = [523.25, 659.25, 783.99, 1046.50];
+        chords.forEach((f, idx) => {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(f, now + idx * 0.08);
+          gain.gain.setValueAtTime(0.12, now + idx * 0.08);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.45);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(now + idx * 0.08);
+          osc.stop(now + idx * 0.08 + 0.46);
+        });
+      }
+
+      toggleMute() {
+        this.muted = !this.muted;
+        try { localStorage.setItem('matrixMuted', this.muted ? '1' : '0'); } catch (_) {}
+        return this.muted;
+      }
+    }
+
+    const sound = new CyberSynth();
+
+    // --- Color Themes ---
+    const THEMES = [
+      { name: 'Emerald Cyber', main: '#00ff88', head: '#ffffff', glow: 'rgba(0,255,136,0.6)' },
+      { name: 'Neon Pink', main: '#ff3e98', head: '#ffffff', glow: 'rgba(255,62,152,0.6)' },
+      { name: 'Quantum Blue', main: '#38bdf8', head: '#ffffff', glow: 'rgba(56,189,248,0.6)' },
+      { name: 'Amber Gold', main: '#ffd257', head: '#ffffff', glow: 'rgba(255,210,87,0.6)' }
+    ];
+    let currentThemeIdx = 0;
+
+    const canvas = document.getElementById('matrixCanvas');
+    const ctx = canvas.getContext('2d');
+    const hudTitle = document.getElementById('hudTitle');
+    const hudSub = document.getElementById('hudSub');
+    const soundBtn = document.getElementById('soundBtn');
+    const colorBtn = document.getElementById('colorBtn');
+    const heartModeBtn = document.getElementById('heartModeBtn');
+    const customMsgBtn = document.getElementById('customMsgBtn');
+
+    let W = window.innerWidth;
+    let H = window.innerHeight;
+    let dpr = window.devicePixelRatio || 1;
+
+    const fontSize = 16;
+    let cols = 0;
+    let drops = [];
+    let isHeartFormed = false;
+    let heartPixels = [];
+    let customMessage = 'ANH YÊU EM';
+
+    const CHARS = '0123456789ABCDEF$#@%&*+-=<>♥♡ILOVEYOU';
+
+    function resize() {
+      W = window.innerWidth;
+      H = window.innerHeight;
+      dpr = window.devicePixelRatio || 1;
+      canvas.width = W * dpr;
+      canvas.height = H * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      cols = Math.floor(W / fontSize);
+      drops = Array.from({ length: cols }, () => Math.floor(Math.random() * -50));
+      computeHeartPoints();
+    }
+    window.addEventListener('resize', resize);
+
+    // Compute 2D grid coordinates for a heart shape
+    function computeHeartPoints() {
+      heartPixels = [];
+      const cx = W / 2;
+      const cy = H / 2;
+      const scale = Math.min(W, H) * 0.022;
+
+      for (let t = 0; t < Math.PI * 2; t += 0.05) {
+        const x = 16 * Math.pow(Math.sin(t), 3);
+        const y = -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t));
+        const px = Math.floor((cx + x * scale) / fontSize) * fontSize;
+        const py = Math.floor((cy + y * scale) / fontSize) * fontSize;
+        heartPixels.push({ x: px, y: py });
+      }
+    }
+
+    function applyTheme(idx) {
+      currentThemeIdx = idx;
+      const theme = THEMES[idx];
+      document.documentElement.style.setProperty('--accent', theme.main);
+      document.documentElement.style.setProperty('--glow', theme.glow);
+    }
+
+    // --- Interaction ---
+    colorBtn.addEventListener('click', () => {
+      sound.playBlip();
+      applyTheme((currentThemeIdx + 1) % THEMES.length);
+    });
+
+    soundBtn.addEventListener('click', () => {
+      const isMuted = sound.toggleMute();
+      soundBtn.textContent = isMuted ? '🔇' : '🔊';
+    });
+    if (sound.muted) soundBtn.textContent = '🔇';
+
+    heartModeBtn.addEventListener('click', () => {
+      isHeartFormed = !isHeartFormed;
+      sound.playHeartDecode();
+
+      if (isHeartFormed) {
+        heartModeBtn.textContent = '⚡ TIẾP TỤC MƯA SỐ';
+        hudTitle.textContent = customMessage;
+        hudSub.textContent = 'Mật mã trái tim đã được giải mã! 💖';
+      } else {
+        heartModeBtn.textContent = '💖 MẬT MÃ TRÁI TIM';
+        hudTitle.textContent = 'CYBER MATRIX';
+        hudSub.textContent = 'Chạm để giải mã dữ liệu tình yêu';
+      }
+    });
+
+    customMsgBtn.addEventListener('click', () => {
+      const input = prompt('Nhập lời nhắn bí mật của bạn:', customMessage);
+      if (input && input.trim()) {
+        customMessage = input.trim().toUpperCase();
+        if (isHeartFormed) hudTitle.textContent = customMessage;
+      }
+    });
+
+    canvas.addEventListener('pointerdown', (e) => {
+      sound.playBlip();
+      const col = Math.floor(e.clientX / fontSize);
+      if (drops[col] !== undefined) {
+        drops[col] = 0; // Trigger instant waterfall on touched column
+      }
+    });
+
+    resize();
+
+    // --- Main Draw Loop ---
+    let frame = 0;
+
+    function draw() {
+      frame++;
+
+      // Translucent background fade
+      ctx.fillStyle = isHeartFormed ? 'rgba(3, 7, 8, 0.12)' : 'rgba(3, 7, 8, 0.18)';
+      ctx.fillRect(0, 0, W, H);
+
+      const theme = THEMES[currentThemeIdx];
+      ctx.font = `bold ${fontSize}px "Courier New", monospace`;
+
+      // Draw Matrix Rain
+      for (let i = 0; i < cols; i++) {
+        const char = CHARS[Math.floor(Math.random() * CHARS.length)];
+        const x = i * fontSize;
+        const y = drops[i] * fontSize;
+
+        // Glowing white head
+        ctx.fillStyle = theme.head;
+        ctx.shadowColor = theme.main;
+        ctx.shadowBlur = 10;
+        ctx.fillText(char, x, y);
+
+        // Trail color
+        ctx.fillStyle = theme.main;
+        ctx.shadowBlur = 0;
+        const prevChar = CHARS[Math.floor(Math.random() * CHARS.length)];
+        ctx.fillText(prevChar, x, y - fontSize);
+
+        if (y > H && Math.random() > 0.975) {
+          drops[i] = 0;
+        }
+        drops[i]++;
+      }
+
+      // Draw Glowing Heart Formation
+      if (isHeartFormed) {
+        ctx.save();
+        ctx.fillStyle = '#ff3e98';
+        ctx.shadowColor = '#ff3e98';
+        ctx.shadowBlur = 16;
+        for (let i = 0; i < heartPixels.length; i++) {
+          const hp = heartPixels[i];
+          const char = (i % 2 === 0) ? '♥' : '1';
+          ctx.fillText(char, hp.x, hp.y);
+        }
+
+        // Center Message
+        ctx.font = `bold ${Math.floor(fontSize * 1.6)}px Inter, sans-serif`;
+        ctx.fillStyle = '#ffffff';
+        ctx.textAlign = 'center';
+        ctx.shadowColor = '#ff3e98';
+        ctx.shadowBlur = 20;
+        ctx.fillText(customMessage, W / 2, H / 2);
+        ctx.restore();
+      }
+
+      requestAnimationFrame(draw);
+    }
+
+    requestAnimationFrame(draw);
+  })();
+  </script>
+</body>
+</html>

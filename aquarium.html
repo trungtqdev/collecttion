@@ -1,0 +1,471 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+  <meta name="theme-color" content="#030b1e">
+  <title>Thủy Cung Sứa Phát Sáng — Bioluminescent Aquarium</title>
+  <style>
+    :root {
+      --bg: #030b1e;
+      --cyan: #38bdf8;
+      --pink: #f43f5e;
+      --mint: #34d399;
+      --purple: #a855f7;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    * { box-sizing: border-box; user-select: none; -webkit-user-select: none; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: var(--bg);
+      color: #fff;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      touch-action: none;
+    }
+    canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    .top-bar {
+      position: absolute;
+      top: calc(14px + var(--safe-top));
+      left: 16px;
+      right: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 20;
+      pointer-events: none;
+    }
+    .top-bar > * { pointer-events: auto; }
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 8px 14px;
+      border-radius: 99px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      color: #cbd5e1;
+      font-size: 13px;
+      font-weight: 800;
+      text-decoration: none;
+      backdrop-filter: blur(8px);
+      transition: background 0.15s, color 0.15s;
+    }
+    .back-btn:hover { background: rgba(56, 189, 248, 0.2); color: #fff; }
+    .icon-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      color: #fff;
+      display: grid;
+      place-items: center;
+      font-size: 15px;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+      transition: transform 0.15s;
+    }
+    .icon-btn:hover { transform: scale(1.08); }
+
+    /* Center Ambient Title */
+    .title-banner {
+      position: absolute;
+      top: calc(70px + var(--safe-top));
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 15;
+      text-align: center;
+      pointer-events: none;
+      width: min(90vw, 540px);
+    }
+    .title-banner h1 {
+      margin: 0;
+      font-size: clamp(24px, 5.5vw, 36px);
+      font-weight: 950;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, #e0f2fe, var(--cyan) 50%, #c084fc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 0 20px rgba(56, 189, 248, 0.5));
+    }
+    .title-banner p {
+      margin: 6px 0 0;
+      font-size: 12px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.65);
+      font-weight: 700;
+    }
+
+    /* Bottom Toolbar */
+    .bottom-bar {
+      position: absolute;
+      bottom: calc(20px + var(--safe-bottom));
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .action-btn {
+      padding: 10px 20px;
+      border-radius: 99px;
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      background: rgba(8, 24, 52, 0.8);
+      color: #e0f2fe;
+      font-size: 13px;
+      font-weight: 900;
+      cursor: pointer;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+      transition: transform 0.15s, background 0.15s;
+    }
+    .action-btn:hover {
+      transform: translateY(-2px);
+      background: rgba(56, 189, 248, 0.25);
+    }
+  </style>
+</head>
+<body>
+  <canvas id="aquariumCanvas"></canvas>
+
+  <header class="top-bar">
+    <a class="back-btn" href="./">
+      <span aria-hidden="true">←</span> Sảnh game
+    </a>
+    <div style="display:flex; gap:8px;">
+      <button id="soundBtn" class="icon-btn" title="Âm thanh dưới đại dương">🔊</button>
+    </div>
+  </header>
+
+  <div class="title-banner">
+    <h1>Thủy Cung Sứa Phát Sáng</h1>
+    <p>Chạm để thả thêm sứa · Rê chuột để tạo luồng nước</p>
+  </div>
+
+  <div class="bottom-bar">
+    <button id="feedBtn" class="action-btn">
+      ✨ Rải Phù Du Phát Sáng
+    </button>
+  </div>
+
+  <script>
+  (() => {
+    'use strict';
+
+    // --- Web Audio Ocean Drone ---
+    class OceanAudio {
+      constructor() {
+        this.ctx = null;
+        this.muted = false;
+        try { this.muted = localStorage.getItem('oceanMuted') === '1'; } catch (_) {}
+      }
+
+      init() {
+        if (!this.ctx) {
+          const AC = window.AudioContext || window.webkitAudioContext;
+          if (AC) {
+            this.ctx = new AC();
+            this.startDrone();
+          }
+        }
+        if (this.ctx && this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      }
+
+      startDrone() {
+        if (this.muted || !this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(65, this.ctx.currentTime); // Low deep ocean hum
+        gain.gain.setValueAtTime(0.02, this.ctx.currentTime);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+      }
+
+      playPlop() {
+        if (this.muted) return;
+        this.init();
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(380, now);
+        osc.frequency.exponentialRampToValueAtTime(700, now + 0.12);
+        gain.gain.setValueAtTime(0.08, now);
+        gain.gain.linearRampToValueAtTime(0.001, now + 0.12);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.13);
+      }
+
+      toggleMute() {
+        this.muted = !this.muted;
+        try { localStorage.setItem('oceanMuted', this.muted ? '1' : '0'); } catch (_) {}
+        if (this.muted && this.ctx) this.ctx.suspend();
+        else if (!this.muted && this.ctx) this.ctx.resume();
+        return this.muted;
+      }
+    }
+
+    const sound = new OceanAudio();
+
+    // --- Canvas & Entities ---
+    const canvas = document.getElementById('aquariumCanvas');
+    const ctx = canvas.getContext('2d');
+    const soundBtn = document.getElementById('soundBtn');
+    const feedBtn = document.getElementById('feedBtn');
+
+    let W = window.innerWidth;
+    let H = window.innerHeight;
+    let dpr = window.devicePixelRatio || 1;
+
+    let jellyfishList = [];
+    let bubbles = [];
+    let plankton = [];
+
+    const JELLY_COLORS = [
+      { bell: '#38bdf8', glow: '#0284c7', tentacle: '#7dd3fc' }, // Cyan
+      { bell: '#f43f5e', glow: '#e11d48', tentacle: '#fda4af' }, // Rose Pink
+      { bell: '#c084fc', glow: '#9333ea', tentacle: '#e9d5ff' }, // Violet
+      { bell: '#34d399', glow: '#059669', tentacle: '#a7f3d0' }  // Mint Green
+    ];
+
+    function resize() {
+      W = window.innerWidth;
+      H = window.innerHeight;
+      dpr = window.devicePixelRatio || 1;
+      canvas.width = W * dpr;
+      canvas.height = H * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      // Bubbles
+      if (bubbles.length === 0) {
+        bubbles = Array.from({ length: 45 }, () => ({
+          x: Math.random() * W,
+          y: Math.random() * H,
+          r: 1 + Math.random() * 3.5,
+          vy: -(20 + Math.random() * 40),
+          alpha: 0.15 + Math.random() * 0.4
+        }));
+      }
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    // --- Jellyfish Class ---
+    class Jellyfish {
+      constructor(x, y, palette = null) {
+        this.x = x;
+        this.y = y;
+        this.palette = palette || JELLY_COLORS[Math.floor(Math.random() * JELLY_COLORS.length)];
+        this.radius = 24 + Math.random() * 22;
+        this.pulsePhase = Math.random() * Math.PI * 2;
+        this.pulseSpeed = 1.6 + Math.random() * 0.8;
+        this.vx = (Math.random() - 0.5) * 15;
+        this.vy = -(12 + Math.random() * 15);
+        this.tentacleCount = 5 + Math.floor(Math.random() * 4);
+        this.tentacles = Array.from({ length: this.tentacleCount }, (_, i) => ({
+          offset: (i / (this.tentacleCount - 1) - 0.5) * (this.radius * 1.3),
+          length: this.radius * (2.2 + Math.random() * 1.2),
+          wavePhase: Math.random() * Math.PI * 2
+        }));
+      }
+
+      update(dt, now) {
+        this.pulsePhase += this.pulseSpeed * dt;
+        const pulse = Math.sin(this.pulsePhase);
+
+        // Move upwards on pulse expansion
+        if (pulse > 0) {
+          this.vy -= pulse * 14 * dt;
+        } else {
+          this.vy += 8 * dt; // gentle sink
+        }
+
+        this.x += this.vx * dt;
+        this.y += this.vy * dt;
+
+        // Screen wrap
+        if (this.y < -this.radius * 4) this.y = H + this.radius;
+        if (this.x < -this.radius) this.x = W + this.radius;
+        if (this.x > W + this.radius) this.x = -this.radius;
+      }
+
+      draw(context) {
+        context.save();
+        context.translate(this.x, this.y);
+
+        const pulseScale = 1 + Math.sin(this.pulsePhase) * 0.18;
+        const r = this.radius;
+
+        // Glowing outer aura
+        const aura = context.createRadialGradient(0, 0, r * 0.4, 0, 0, r * 2.2);
+        aura.addColorStop(0, this.palette.glow + '55');
+        aura.addColorStop(1, 'transparent');
+        context.fillStyle = aura;
+        context.beginPath();
+        context.arc(0, 0, r * 2.2, 0, Math.PI * 2);
+        context.fill();
+
+        // Tentacles
+        context.strokeStyle = this.palette.tentacle + '77';
+        context.lineWidth = 1.6;
+        this.tentacles.forEach((t) => {
+          context.beginPath();
+          context.moveTo(t.offset, r * 0.2);
+          for (let seg = 1; seg <= 6; seg++) {
+            const segY = r * 0.2 + (t.length / 6) * seg;
+            const waveX = t.offset + Math.sin(this.pulsePhase + t.wavePhase + seg * 0.8) * (8 * (seg / 6));
+            context.lineTo(waveX, segY);
+          }
+          context.stroke();
+        });
+
+        // Translucent Bell (Nón sứa)
+        context.scale(1 / pulseScale, pulseScale);
+        const bellGrad = context.createRadialGradient(0, -r * 0.3, r * 0.1, 0, 0, r);
+        bellGrad.addColorStop(0, '#ffffff');
+        bellGrad.addColorStop(0.4, this.palette.bell);
+        bellGrad.addColorStop(0.85, this.palette.glow);
+        bellGrad.addColorStop(1, 'rgba(0,0,0,0)');
+
+        context.fillStyle = bellGrad;
+        context.beginPath();
+        context.arc(0, 0, r, Math.PI, 0); // Upper dome
+        context.quadraticCurveTo(r * 0.5, r * 0.3, 0, r * 0.2);
+        context.quadraticCurveTo(-r * 0.5, r * 0.3, -r, 0);
+        context.closePath();
+        context.fill();
+
+        // Inner glowing organ core
+        context.fillStyle = '#ffffff';
+        context.beginPath();
+        context.arc(0, -r * 0.2, r * 0.25, 0, Math.PI * 2);
+        context.fill();
+
+        context.restore();
+      }
+    }
+
+    // Spawn Initial Jellyfish
+    for (let i = 0; i < 6; i++) {
+      jellyfishList.push(new Jellyfish(W * 0.15 + i * (W * 0.14), H * 0.4 + (i % 3) * (H * 0.2)));
+    }
+
+    // --- Interaction ---
+    canvas.addEventListener('pointerdown', (e) => {
+      sound.playPlop();
+      const rect = canvas.getBoundingClientRect();
+      const px = e.clientX - rect.left;
+      const py = e.clientY - rect.top;
+      jellyfishList.push(new Jellyfish(px, py));
+      if (jellyfishList.length > 15) jellyfishList.shift();
+    });
+
+    feedBtn.addEventListener('click', () => {
+      sound.playPlop();
+      for (let i = 0; i < 40; i++) {
+        plankton.push({
+          x: Math.random() * W,
+          y: Math.random() * H,
+          r: 1.5 + Math.random() * 2,
+          vy: 10 + Math.random() * 20,
+          color: '#ffd257',
+          life: 3.5
+        });
+      }
+    });
+
+    soundBtn.addEventListener('click', () => {
+      const isMuted = sound.toggleMute();
+      soundBtn.textContent = isMuted ? '🔇' : '🔊';
+    });
+    if (sound.muted) soundBtn.textContent = '🔇';
+
+    // --- Main Loop ---
+    let lastTime = performance.now();
+
+    function render(now) {
+      const dt = Math.min(0.04, (now - lastTime) / 1000);
+      lastTime = now;
+
+      // Abyssal Background
+      const oceanGrad = ctx.createLinearGradient(0, 0, 0, H);
+      oceanGrad.addColorStop(0, '#04122e');
+      oceanGrad.addColorStop(0.6, '#020b1e');
+      oceanGrad.addColorStop(1, '#01050d');
+      ctx.fillStyle = oceanGrad;
+      ctx.fillRect(0, 0, W, H);
+
+      // Light Caustics from above
+      ctx.save();
+      ctx.globalAlpha = 0.08;
+      ctx.fillStyle = '#38bdf8';
+      for (let i = 0; i < 5; i++) {
+        const x = W * (0.2 * i) + Math.sin(now * 0.001 + i) * 60;
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x + 120, H);
+        ctx.lineTo(x + 180, H);
+        ctx.lineTo(x + 60, 0);
+        ctx.fill();
+      }
+      ctx.restore();
+
+      // Rising Bubbles
+      for (let i = 0; i < bubbles.length; i++) {
+        const b = bubbles[i];
+        b.y += b.vy * dt;
+        if (b.y < -10) b.y = H + 10;
+        ctx.fillStyle = `rgba(125, 211, 252, ${b.alpha})`;
+        ctx.beginPath();
+        ctx.arc(b.x + Math.sin(now * 0.002 + i) * 6, b.y, b.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Plankton particles
+      for (let i = plankton.length - 1; i >= 0; i--) {
+        const p = plankton[i];
+        p.life -= dt;
+        if (p.life <= 0) { plankton.splice(i, 1); continue; }
+        p.y += p.vy * dt;
+        ctx.fillStyle = p.color;
+        ctx.shadowColor = p.color;
+        ctx.shadowBlur = 8;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Update & Draw Jellyfish
+      jellyfishList.forEach((jelly) => {
+        jelly.update(dt, now);
+        jelly.draw(ctx);
+      });
+
+      requestAnimationFrame(render);
+    }
+
+    requestAnimationFrame(render);
+  })();
+  </script>
+</body>
+</html>
