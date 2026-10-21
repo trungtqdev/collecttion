@@ -70,6 +70,12 @@
     .art-blade:before { background:radial-gradient(circle,#ec489955,transparent 68%); transform:translate(-60px,-20px); }
     .art-bounce { background:radial-gradient(ellipse at 50% 110%,#3b82f655,transparent 62%),linear-gradient(135deg,#0e2444,#101633); }
     .art-bounce:before { background:radial-gradient(circle,#38bdf855,transparent 68%); transform:translate(65px,-25px); }
+    .art-survivor { background:radial-gradient(ellipse at 50% 110%,#46f59b44,transparent 62%),linear-gradient(135deg,#0a2926,#071520); }
+    .art-survivor:before { background:radial-gradient(circle,#46f59b44,transparent 68%); transform:translate(-65px,-20px); }
+    .art-stack { background:radial-gradient(ellipse at 50% 110%,#ffd25744,transparent 62%),linear-gradient(135deg,#2e220a,#161324); }
+    .art-stack:before { background:radial-gradient(circle,#ffd25744,transparent 68%); transform:translate(60px,-25px); }
+    .art-pac { background:radial-gradient(ellipse at 50% 110%,#ffd25744,transparent 62%),linear-gradient(135deg,#1f1a08,#0e1526); }
+    .art-pac:before { background:radial-gradient(circle,#ffd25744,transparent 68%); transform:translate(-55px,-20px); }
     .scene { position:relative; width:230px; height:145px; }
     .scene .star { position:absolute; color:#ffe48a; filter:drop-shadow(0 0 9px #ffd95a); animation:twinkle 2.2s ease-in-out infinite alternate; }
     .scene .star:nth-child(2) { animation-delay:.7s; }
@@ -113,6 +119,19 @@
     .bounce-scene .brick.b3 { right:52px; top:42px; border-color:#ffd257; color:#ffd257; background:#ffd25722; box-shadow:0 0 12px #ffd25744; }
     .bounce-scene .laser-ball { position:absolute; left:96px; bottom:24px; width:12px; height:12px; border-radius:50%; background:#fff; box-shadow:0 0 14px #45e7ff; animation:floatDrop 1.8s ease-in-out infinite alternate; }
     .bounce-scene .aim-ray { position:absolute; left:102px; bottom:32px; width:2px; height:54px; background:linear-gradient(to top,#45e7ff,transparent); transform:rotate(-32deg); transform-origin:bottom; }
+    .survivor-scene .hero-drone { position:absolute; left:96px; top:54px; width:38px; height:38px; border-radius:50%; background:#45e7ff; box-shadow:0 0 20px #45e7ff; display:grid; place-items:center; font-size:20px; }
+    .survivor-scene .orbit-orb { position:absolute; left:68px; top:36px; width:14px; height:14px; border-radius:50%; background:#46f59b; box-shadow:0 0 16px #46f59b; animation:floatDrop 2s ease-in-out infinite alternate; }
+    .survivor-scene .swarm-bot { position:absolute; right:58px; top:42px; width:22px; height:22px; border-radius:50%; background:#ff3e98; box-shadow:0 0 14px #ff3e98; }
+    .survivor-scene .xp-gem { position:absolute; right:92px; bottom:28px; width:12px; height:12px; transform:rotate(45deg); background:#ffd257; box-shadow:0 0 12px #ffd257; }
+    .stack-scene .slab { position:absolute; height:18px; border-radius:4px; box-shadow:0 0 14px currentColor; }
+    .stack-scene .slab.s1 { left:50px; bottom:24px; width:130px; background:#45e7ff; color:#45e7ff; }
+    .stack-scene .slab.s2 { left:56px; bottom:46px; width:118px; background:#ffd257; color:#ffd257; }
+    .stack-scene .slab.s3 { left:66px; bottom:68px; width:98px; background:#ff3e98; color:#ff3e98; }
+    .stack-scene .slab.s4 { left:74px; bottom:90px; width:82px; background:#a855f7; color:#a855f7; animation:floatDrop 1.8s ease-in-out infinite alternate; }
+    .pac-scene .pac-hero { position:absolute; left:62px; top:52px; width:44px; height:44px; border-radius:50%; background:#ffd257; box-shadow:0 0 20px #ffd257; }
+    .pac-scene .pac-hero:after { content:""; position:absolute; right:0; top:12px; width:0; height:0; border-top:10px solid transparent; border-bottom:10px solid transparent; border-right:18px solid #050714; }
+    .pac-scene .ghost-bot { position:absolute; right:58px; top:52px; width:34px; height:36px; border-radius:18px 18px 0 0; background:#ff3366; box-shadow:0 0 18px #ff3366; }
+    .pac-scene .pellet-dot { position:absolute; left:124px; top:68px; width:8px; height:8px; border-radius:50%; background:#45e7ff; box-shadow:0 0 10px #45e7ff; }
     .card-content { display:flex; flex:1; flex-direction:column; padding:21px 23px 22px; }
     .card-kicker { margin:0 0 6px; color:var(--muted); font-size:10px; font-weight:900; letter-spacing:.14em; text-transform:uppercase; }
     .card-title-row { display:flex; align-items:center; justify-content:space-between; gap:12px; }
@@ -295,6 +314,65 @@
               </div>
             </div>
           </article>
+
+          <article class="game-card">
+            <div class="art art-survivor" aria-hidden="true">
+              <div class="scene survivor-scene">
+                <span class="orbit-orb"></span>
+                <div class="hero-drone">🛸</div>
+                <span class="swarm-bot"></span>
+                <span class="xp-gem"></span>
+              </div>
+            </div>
+            <div class="card-content">
+              <p class="card-kicker">Roguelite · Sinh tồn đấu trường</p>
+              <div class="card-title-row"><h3>Chiến Binh Sinh Tồn</h3><span class="record">Kỷ lục <b id="survivor-best">00:00</b></span></div>
+              <p class="card-copy">Điều khiển chiến cơ né tránh bầy robot, nhặt ngọc năng lượng thăng cấp và trang bị bão đạn laser.</p>
+              <div class="card-bottom">
+                <span class="controls">Phím WASD / Vuốt để di chuyển</span>
+                <a class="play" href="./cyber-survivor.html">Chiến ngay <span class="arrow" aria-hidden="true">↗</span></a>
+              </div>
+            </div>
+          </article>
+
+          <article class="game-card">
+            <div class="art art-stack" aria-hidden="true">
+              <div class="scene stack-scene">
+                <span class="slab s1"></span>
+                <span class="slab s2"></span>
+                <span class="slab s3"></span>
+                <span class="slab s4"></span>
+              </div>
+            </div>
+            <div class="card-content">
+              <p class="card-kicker">Căn nhịp · Xếp tháp cao tầng</p>
+              <div class="card-title-row"><h3>Tòa Tháp Trọng Lực</h3><span class="record">Kỷ lục <b id="stack-best">0</b></span></div>
+              <p class="card-copy">Chạm đúng thời điểm để chồng từng khối neon lên nhau. Đặt chuẩn xác giữ nguyên vẹn kích thước tháp.</p>
+              <div class="card-bottom">
+                <span class="controls">Chạm / Phím Space để thả khối</span>
+                <a class="play" href="./tower-stack.html">Xếp tháp <span class="arrow" aria-hidden="true">↗</span></a>
+              </div>
+            </div>
+          </article>
+
+          <article class="game-card">
+            <div class="art art-pac" aria-hidden="true">
+              <div class="scene pac-scene">
+                <div class="pac-hero"></div>
+                <span class="pellet-dot"></span>
+                <div class="ghost-bot"></div>
+              </div>
+            </div>
+            <div class="card-content">
+              <p class="card-kicker">Mê cung cổ điển · Rượt đuổi</p>
+              <div class="card-title-row"><h3>Mê Cung Pac-Neon</h3><span class="record">Kỷ lục <b id="pac-best">0</b></span></div>
+              <p class="card-copy">Ăn sạch hạt năng lượng trong mê cung neon, nhặt ngọc sức mạnh để phản công nuốt chửng bóng ma.</p>
+              <div class="card-bottom">
+                <span class="controls">Phím mũi tên / Vuốt đổi hướng</span>
+                <a class="play" href="./pac-neon.html">Chạy ngay <span class="arrow" aria-hidden="true">↗</span></a>
+              </div>
+            </div>
+          </article>
         </div>
       </section>
 
@@ -331,12 +409,26 @@
           return '0';
         }
       };
+      const readTime = (key) => {
+        try {
+          const sec = Number(localStorage.getItem(key) || 0);
+          if (!sec) return '00:00';
+          const m = Math.floor(sec / 60);
+          const s = Math.floor(sec % 60);
+          return `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
+        } catch (_) {
+          return '00:00';
+        }
+      };
       document.getElementById('drift-best').textContent = readScore('driftCatcherBest');
       document.getElementById('comet-best').textContent = readScore('cometBest');
       document.getElementById('noodle-best').textContent = readScore('noodleRushBest');
       document.getElementById('cosmo-best').textContent = readScore('cosmoMergeBest');
       document.getElementById('blade-best').textContent = readScore('cyberBladeBest');
       document.getElementById('bounce-best').textContent = readScore('neonBounceBest');
+      document.getElementById('survivor-best').textContent = readTime('cyberSurvivorBest');
+      document.getElementById('stack-best').textContent = readScore('towerStackBest');
+      document.getElementById('pac-best').textContent = readScore('pacNeonBest');
     })();
   </script>
 </body>
